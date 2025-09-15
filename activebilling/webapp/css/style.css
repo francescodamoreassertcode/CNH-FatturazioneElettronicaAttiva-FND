@@ -1,0 +1,19 @@
+/* Pagina di Ricerca */
+.sapMListTblCell .sapMObjStatus.sapMObjStatusInverted .sapMObjStatusText {
+    line-height: 1rem;
+    vertical-align: middle;
+    min-width: 6rem ! Important;
+    text-align: center ! Important;
+}
+
+.sapMSegBBtn:first-child .sapMSegBBtnInnerWrapper {
+    border-top-left-radius: .5rem;
+    border-bottom-left-radius: .5rem;
+    border-left: 1px solid #bcc3ca;
+    width: 14rem ! Important;
+}
+
+
+.minorClass > div > input {
+    font-size: 0.75rem !Important;
+}

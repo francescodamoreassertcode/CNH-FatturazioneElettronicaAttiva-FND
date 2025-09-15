@@ -1,0 +1,34 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+	<Dialog id="ackUserDialog" title="{i18n>ackUserDialogTitle}" contentWidth="500px" contentHeight="400px">
+		<content>
+			<VBox class="sapUiMediumMargin">
+				<Label text="{i18n>selectAckUserLabel}" class="sapUiMediumMarginBottom"/>
+				<ComboBox id="ackUserComboBox" 
+					selectedKey="{ackUserModel>/selectedAckCode}" 
+					showSecondaryValues="true" 
+					width="100%">
+					<core:ListItem key="USR01" text="USR01" additionalText="{i18n>ackUserUsr01}"/>
+					<core:ListItem key="USR02" text="USR02" additionalText="{i18n>ackUserUsr02}"/>
+					<core:ListItem key="USR03" text="USR03" additionalText="{i18n>ackUserUsr03}"/>
+					<core:ListItem key="USR04" text="USR04" additionalText="{i18n>ackUserUsr04}"/>
+					<core:ListItem key="USR05" text="USR05" additionalText="{i18n>ackUserUsr05}"/>
+					<core:ListItem key="USR06" text="USR06" additionalText="{i18n>ackUserUsr06}"/>
+					<core:ListItem key="USR07" text="USR07" additionalText="{i18n>ackUserUsr07}"/>
+					<core:ListItem key="USR08" text="USR08" additionalText="{i18n>ackUserUsr08}"/>
+					<core:ListItem key="USR10" text="USR10" additionalText="{i18n>ackUserUsr10}"/>
+				</ComboBox>
+				
+				<Label text="{i18n>ackUserTextLabel}" class="sapUiMediumMarginTop sapUiMediumMarginBottom"/>
+				<TextArea id="ackUserTextArea" 
+					value="{ackUserModel>/ackUserText}" 
+					placeholder="{i18n>ackUserTextPlaceholder}"
+					rows="4" 
+					width="100%"/>
+			</VBox>
+		</content>
+		<buttons>
+			<Button text="{i18n>ackUserCancelBtn}" press=".onAckUserCancel" type="Transparent"/>
+			<Button text="{i18n>ackUserSaveBtn}" press=".onAckUserSave" type="Emphasized"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>
