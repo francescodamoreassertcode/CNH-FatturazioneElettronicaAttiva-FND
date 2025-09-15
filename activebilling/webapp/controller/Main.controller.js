@@ -682,6 +682,23 @@ sap.ui.define([
             }
         },
 
+        onHistorySelectionChange: function(oEvent) {
+            const oHistoryTable = this.byId("historyTable");
+            const iSelectedIndex = oHistoryTable.getSelectedIndex();
+            
+            if (iSelectedIndex !== -1) {
+                const oSelectedContextData = oHistoryTable.getContextByIndex(iSelectedIndex).getObject();
+                const oHistoryRecord = oSelectedContextData.getObject();
+                
+                // Log the selected record for debugging
+                console.log("History record selected:", oHistoryRecord);
+                
+                // You can add additional logic here if needed
+                // For example, enabling/disabling buttons based on selection
+                // or showing additional details about the selected record
+            }
+        },
+
         onDownloadCsvPressed: function(oEvent) {
             const oHistoryTable = this.byId("historyTable");
             const iSelectedIndex = oHistoryTable.getSelectedIndex();

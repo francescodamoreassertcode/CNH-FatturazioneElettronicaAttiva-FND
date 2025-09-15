@@ -23,7 +23,8 @@
 					width="100%"
 					visibleRowCountMode="Auto"
 					minAutoRowCount="5"
-					selectionMode="None"
+					selectionMode="Single"
+					selectionChange=".onHistorySelectionChange"
 					rows="{ path: 'historyModel>/historyData' }">
 					<table:extension>
 						<OverflowToolbar class="sapUiMediumMarginTop">
