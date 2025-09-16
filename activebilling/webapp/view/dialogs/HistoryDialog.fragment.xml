@@ -23,7 +23,7 @@
 					width="100%"
 					visibleRowCountMode="Auto"
 					minAutoRowCount="5"
-					selectionMode="Single"
+					selectionMode="Multi"
 					selectionChange=".onHistorySelectionChange"
 					rows="{ path: 'historyModel>/historyData' }">
 					<table:extension>

@@ -45,14 +45,13 @@ sap.ui.define([
             }, 100);
         },
 
+
          onRouteMatched: function () {
             this._oBundleI18n = this.getOwnerComponent().getModel("i18n").getResourceBundle();
             console.log("This works apparently");
         },
 
-        // FilterBar event handlers
         onSearch: function() {
-            // Gather all filter values and apply them to the table
             this._applyFilters();
         },
 
@@ -126,30 +125,69 @@ sap.ui.define([
                 }));
             }
 
-            // GJAHR (Year) - Date range
+            // GJAHR (Year) - Individual year filters (OR logic)
             if (oFilterData.YearFrom && oFilterData.YearTo) {
                 const iYearFrom = parseInt(oFilterData.YearFrom);
                 const iYearTo = parseInt(oFilterData.YearTo);
                 
                 if (iYearFrom && iYearTo) {
-                    aFilters.push(new Filter("GJAHR", FilterOperator.GE, iYearFrom.toString()));
-                    aFilters.push(new Filter("GJAHR", FilterOperator.LE, iYearTo.toString()));
+                    // Create individual filters for each year in the range
+                    const aYearFilters = [];
+                    for (let i = iYearFrom; i <= iYearTo; i++) {
+                        // GJAHR is stored as strings in the data
+                        aYearFilters.push(new Filter("GJAHR", FilterOperator.EQ, i.toString()));
+                    }
+                    
+                    if (aYearFilters.length > 0) {
+                        console.log(`Creating year filters for range ${iYearFrom}-${iYearTo}:`, aYearFilters.map(f => f.oValue1));
+                        aFilters.push(new Filter({
+                            filters: aYearFilters,
+                            and: false  // OR logic - any year in the range
+                        }));
+                    }
                 }
             }
 
-            // BLDAT (Document Date) - Single date
-            if (oFilterData.BLDAT) {
-                aFilters.push(new Filter("BLDAT", FilterOperator.EQ, oFilterData.BLDAT));
+            // BLDAT (Document Date) - Date range
+            if (oFilterData.BLDATFrom && oFilterData.BLDATTo) {
+                console.log("BLDAT filter data:", {
+                    BLDATFrom: oFilterData.BLDATFrom,
+                    BLDATTo: oFilterData.BLDATTo
+                });
+                
+                // Create individual filters for date range (GE and LE work better with string dates)
+                const aBldatFilters = [
+                    new Filter("BLDAT", FilterOperator.GE, oFilterData.BLDATFrom),
+                    new Filter("BLDAT", FilterOperator.LE, oFilterData.BLDATTo)
+                ];
+                aFilters.push(new Filter({
+                    filters: aBldatFilters,
+                    and: true  // AND logic - date must be >= from AND <= to
+                }));
+                
+                console.log("Created BLDAT range filters:", aBldatFilters.map(f => `${f.sPath} ${f.sOperator} ${f.oValue1}`));
             }
 
-            // BLART (Document Type) - Single selection
-            if (oFilterData.BLART) {
-                aFilters.push(new Filter("BLART", FilterOperator.EQ, oFilterData.BLART));
+            // BLART (Document Type) - Multi selection
+            if (oFilterData.BLART && oFilterData.BLART.length > 0) {
+                const aBlartFilters = oFilterData.BLART.map(sValue => 
+                    new Filter("BLART", FilterOperator.EQ, sValue)
+                );
+                aFilters.push(new Filter({
+                    filters: aBlartFilters,
+                    and: false
+                }));
             }
 
-            // AWSYS (Origin System) - Single selection
-            if (oFilterData.AWSYS) {
-                aFilters.push(new Filter("AWSYS", FilterOperator.EQ, oFilterData.AWSYS));
+            // AWSYS (Origin System) - Multi selection
+            if (oFilterData.AWSYS && oFilterData.AWSYS.length > 0) {
+                const aAwsysFilters = oFilterData.AWSYS.map(sValue => 
+                    new Filter("AWSYS", FilterOperator.EQ, sValue)
+                );
+                aFilters.push(new Filter({
+                    filters: aAwsysFilters,
+                    and: false
+                }));
             }
 
             // STATUS (Document Status) - Multi selection
@@ -163,9 +201,15 @@ sap.ui.define([
                 }));
             }
 
-            // KUNNR (Client Code) - Single selection
-            if (oFilterData.KUNNR) {
-                aFilters.push(new Filter("KUNNR", FilterOperator.EQ, oFilterData.KUNNR));
+            // KUNNR (Client Code) - Multi selection
+            if (oFilterData.KUNNR && oFilterData.KUNNR.length > 0) {
+                const aKunnrFilters = oFilterData.KUNNR.map(sValue => 
+                    new Filter("KUNNR", FilterOperator.EQ, sValue)
+                );
+                aFilters.push(new Filter({
+                    filters: aKunnrFilters,
+                    and: false
+                }));
             }
 
             return aFilters;
@@ -181,11 +225,13 @@ sap.ui.define([
                     BELNR: [],
                     YearFrom: new Date().getFullYear().toString(),
                     YearTo: new Date().getFullYear().toString(),
-                    BLDAT: null,
-                    BLART: "",
-                    AWSYS: "",
+                    BLDATFrom: null,
+                    BLDATTo: null,
+                    BLDATRange: "",
+                    BLART: [],
+                    AWSYS: [],
                     STATUS: [],
-                    KUNNR: ""
+                    KUNNR: []
                 });
                 
                 // Clear any tokens from MultiInput controls
@@ -218,12 +264,71 @@ sap.ui.define([
             // No automatic filtering - only when search button is clicked
         },
 
-        onDatePickerChange: function(oEvent) {
-            // No automatic filtering - only when search button is clicked
+        onBldatRangeChange: function(oEvent) {
+            const oDateRangeSelection = oEvent.getSource(),
+                  sValue = oDateRangeSelection.getValue(),
+                  oFilterModel = this.getView().getModel("filterModel");
+
+            if (oFilterModel && sValue) {
+                // DateRangeSelection returns value in format "dd/MM/yyyy - dd/MM/yyyy" or "dd/MM/yyyy"
+                const aDateParts = sValue.split(" - ").map(s => s.trim());
+                console.log("BLDAT DateRangeSelection value:", sValue, "Split parts:", aDateParts);
+                
+                // Helper function to convert dd/MM/yyyy to yyyy-MM-dd
+                const convertDateFormat = (sDate) => {
+                    if (sDate.includes('/')) {
+                        // Convert from dd/MM/yyyy to yyyy-MM-dd
+                        const aParts = sDate.split('/');
+                        if (aParts.length === 3) {
+                            return `${aParts[2]}-${aParts[1].padStart(2, '0')}-${aParts[0].padStart(2, '0')}`;
+                        }
+                    }
+                    return sDate; // Return as-is if already in yyyy-MM-dd format
+                };
+                
+                if (aDateParts.length === 2) {
+                    const sFromDate = convertDateFormat(aDateParts[0]),
+                          sToDate = convertDateFormat(aDateParts[1]);
+                    
+                    if (sFromDate && sToDate) {
+                        oFilterModel.setProperty("/BLDATFrom", sFromDate);
+                        oFilterModel.setProperty("/BLDATTo", sToDate);
+                        console.log("Set BLDAT range:", sFromDate, "to", sToDate);
+                    }
+                } else if (aDateParts.length === 1) {
+                    const sDate = convertDateFormat(aDateParts[0].trim());
+                    if (sDate) {
+                        oFilterModel.setProperty("/BLDATFrom", sDate);
+                        oFilterModel.setProperty("/BLDATTo", sDate);
+                        console.log("Set BLDAT single date:", sDate);
+                    }
+                }
+            }
         },
 
         onDateRangeChange: function(oEvent) {
-            // No automatic filtering - only when search button is clicked
+            const oDateRangeSelection = oEvent.getSource(),
+                  sValue = oDateRangeSelection.getValue(),
+                  oFilterModel = this.getView().getModel("filterModel");
+
+            if (oFilterModel && sValue) {
+                const aYearParts = sValue.split(" - ").map(s => s.trim());
+                if (aYearParts.length === 2) {
+                    const sFromYear = aYearParts[0],
+                          sToYear = aYearParts[1];
+                    
+                    if (sFromYear && sToYear) {
+                        oFilterModel.setProperty("/YearFrom", sFromYear);
+                        oFilterModel.setProperty("/YearTo", sToYear);
+                    }
+                } else if (aYearParts.length === 1) {
+                    const sYear = aYearParts[0].trim();
+                    if (sYear) {
+                        oFilterModel.setProperty("/YearFrom", sYear);
+                        oFilterModel.setProperty("/YearTo", sYear);
+                    }
+                }
+            }
         },
 
         onMultiComboBoxChange: function(oEvent) {
@@ -290,42 +395,56 @@ sap.ui.define([
             const sAction = evt.getSource().data("function");
 
             const oTable = this.byId("tableDocuments");
-            const iSelectedIndex = oTable.getSelectedIndex();
+            const aSelectedIndices = oTable.getSelectedIndices();
 
-            if (iSelectedIndex === -1) {
+            if (aSelectedIndices.length === 0) {
                 MessageBox.error(this._getText("noRowSelected"));
                 return;
             }
 
-            const oSelectedContextData = oTable.getContextByIndex(iSelectedIndex).getObject();
-            const oClonedData = JSON.parse(JSON.stringify(oSelectedContextData));
+            // Get all selected records
+            const aSelectedRecords = aSelectedIndices.map(iIndex => {
+                const oContextData = oTable.getContextByIndex(iIndex).getObject();
+                return JSON.parse(JSON.stringify(oContextData));
+            });
 
-            // Validate ACK_CODE before proceeding
-            if (oClonedData.ACK_CODE !== "5") {
+            // Validate ACK_CODE for all selected records
+            const aInvalidRecords = aSelectedRecords.filter(record => record.ACK_CODE !== "5");
+            if (aInvalidRecords.length > 0) {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
             }
 
-            this._confirmAndExecuteTableAction(sAction, oClonedData);
+            this._confirmAndExecuteTableAction(sAction, aSelectedRecords);
         },
 
-        _confirmAndExecuteTableAction: function(sAction, oRowData) {
-            const sMessage = sAction === "Resend" 
-                ? this._getText("confirmResendMessage")
-                : this._getText("confirmCancelMessage");
+        _confirmAndExecuteTableAction: function(sAction, aRowData) {
+            const iRecordCount = aRowData.length;
+            
+            // Create a list of document numbers for display
+            const aDocumentNumbers = aRowData.map(record => 
+                `${record.BELNR}`
+            );
+            const sDocumentList = aDocumentNumbers.join('\n');
+            
+            const sBaseMessage = sAction === "Resend" 
+                ? this._getText("confirmResendMessageMultiple", [iRecordCount])
+                : this._getText("confirmCancelMessageMultiple", [iRecordCount]);
+            
+            const sMessage = `${sBaseMessage}\n\nSelected Documents:\n${sDocumentList}`;
                 
             MessageBox.warning(sMessage, {
                 actions: [MessageBox.Action.YES, MessageBox.Action.CANCEL],
                 emphasizedAction: MessageBox.Action.YES,
                 onClose: function (sChoice) {
                     if (sChoice === MessageBox.Action.YES) {
-                        this._executeTableAction(sAction, oRowData);
+                        this._executeTableAction(sAction, aRowData);
                     }
                 }.bind(this)
             });
         },
 
-        _executeTableAction: async function(sAction, oRowData) {
+        _executeTableAction: async function(sAction, aRowData) {
             const actionMap = {
                 Resend: this._handleResend.bind(this),
                 Cancel: this._handleCancel.bind(this)
@@ -339,9 +458,16 @@ sap.ui.define([
 
             this.showBusy();
             try {
-                await fn(oRowData);
-                const successKey = sAction === "Resend" ? "resendSuccess" : sAction === "Cancel" ? "cancelSuccess" : "actionSuccess";
-                MessageToast.show(this._getText(successKey));
+                // Process all selected records
+                const aResults = [];
+                for (const oRowData of aRowData) {
+                    await fn(oRowData);
+                    aResults.push(oRowData);
+                }
+                
+                const iProcessedCount = aResults.length;
+                const successKey = sAction === "Resend" ? "resendSuccessMultiple" : sAction === "Cancel" ? "cancelSuccessMultiple" : "actionSuccessMultiple";
+                MessageToast.show(this._getText(successKey, [iProcessedCount]));
             } catch (err) {
                 MessageBox.error(err && err.message ? err.message : this._getText("actionError"));
             } finally {
@@ -701,26 +827,44 @@ sap.ui.define([
 
         onDownloadCsvPressed: function(oEvent) {
             const oHistoryTable = this.byId("historyTable");
-            const iSelectedIndex = oHistoryTable.getSelectedIndex();
+            const aSelectedIndices = oHistoryTable.getSelectedIndices();
 
-            if (iSelectedIndex === -1) {
+            if (aSelectedIndices.length === 0) {
                 MessageBox.error(this._getText("noHistoryRecordSelected"));
                 return;
             }
 
-            const oSelectedContextData = oHistoryTable.getContextByIndex(iSelectedIndex).getObject();
-            const oHistoryRecord = oSelectedContextData.getObject();
+            // Get all selected history records
+            const aSelectedRecords = aSelectedIndices.map(iIndex => {
+                const oContextData = oHistoryTable.getContextByIndex(iIndex).getObject();
+                return oContextData.getObject();
+            });
 
-            // Validate that the record has a CSV file
-            if (!oHistoryRecord.FILE_NAME) {
+            // Filter records that have CSV files
+            const aRecordsWithCsv = aSelectedRecords.filter(record => record.FILE_NAME);
+            
+            if (aRecordsWithCsv.length === 0) {
                 MessageBox.error(this._getText("noCsvFileAvailable"));
                 return;
             }
 
-            // TODO: Replace with real API call to download CSV
-            // Example: window.open(`${this.baseUrl}/downloadCsv?fileId=${oHistoryRecord.FILE_CONTENT_ID}`)
+            // Process downloads for all selected records with CSV files
+            const aFileNames = aRecordsWithCsv.map(record => record.FILE_NAME);
             
-            MessageBox.information(this._getText("csvDownloadStarted", [oHistoryRecord.FILE_NAME]));
+            // TODO: Replace with real API call to download CSV
+            // Example: aRecordsWithCsv.forEach(record => {
+            //     window.open(`${this.baseUrl}/downloadCsv?fileId=${record.FILE_CONTENT_ID}`)
+            // });
+            
+            let sMessage;
+            if (aRecordsWithCsv.length === 1) {
+                sMessage = this._getText("csvDownloadStarted", [aFileNames[0]]);
+            } else {
+                const sBaseMessage = this._getText("csvDownloadStartedMultiple", [aRecordsWithCsv.length]);
+                const sFileList = aFileNames.join('\n');
+                sMessage = `${sBaseMessage}\n\nFiles to download:\n${sFileList}`;
+            }
+            MessageBox.information(sMessage);
         },
 
         // Language selector functionality

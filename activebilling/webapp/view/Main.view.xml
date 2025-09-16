@@ -67,41 +67,47 @@
                         <!-- GJAHR (Year range, default current year) -->
                         <fb:FilterGroupItem name="GJAHR" label="{i18n>gjahr}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <DateRangeSelection delimiter="-" displayFormat="yyyy" valueFormat="yyyy"
-                                    value="{ 'type': 'sap.ui.model.type.DateInterval', 'parts': [
-                                        { 'path': 'filterModel>/YearFrom', 'type': 'sap.ui.model.type.Date', 'formatOptions': { 'pattern': 'yyyy' }},
-                                        { 'path': 'filterModel>/YearTo', 'type': 'sap.ui.model.type.Date', 'formatOptions': { 'pattern': 'yyyy' }}
-                                    ] }"
-                                    change=".onDateRangeChange"/>
+                                <DateRangeSelection
+									id="yearRangeSelection"
+									displayFormat="yyyy"
+									change=".onDateRangeChange"
+									value="{filterModel>/YearRange}" />
                             </fb:control>
                         </fb:FilterGroupItem>
 
-                        <!-- BLDAT (Document Date, date picker) -->
+                        <!-- BLDAT (Document Date, date range) -->
                         <fb:FilterGroupItem name="BLDAT" label="{i18n>bldat}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <DatePicker value="{filterModel>/BLDAT}" displayFormat="dd/MM/yyyy" valueFormat="yyyy-MM-dd" change=".onDatePickerChange"/>
+                                <DateRangeSelection
+									id="bldatRangeSelection"
+									displayFormat="dd/MM/yyyy"
+									valueFormat="yyyy-MM-dd"
+									change=".onBldatRangeChange"
+									value="{filterModel>/BLDATRange}" />
                             </fb:control>
                         </fb:FilterGroupItem>
 
                         <!-- BLART (Document Type, match code / dropdown) -->
                         <fb:FilterGroupItem name="BLART" label="{i18n>blart}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox selectedKey="{filterModel>/BLART}" items="{MatchCodeModel>/DocTypes}" change=".onComboBoxChange">
-                                    <core:Item key="{MatchCodeModel>key}" text="{MatchCodeModel>name}"/>
-                                </ComboBox>
+                                <MultiComboBox selectedKeys="{filterModel>/BLART}" change=".onMultiComboBoxChange">
+                                    <core:Item key="EG" text="EG"/>
+                                    <core:Item key="FG" text="FG"/>
+                                    <core:Item key="EA" text="EA"/>
+                                </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
                         <!-- AWSYS (Origin System, match code dropdown, fixed values) -->
                         <fb:FilterGroupItem name="AWSYS" label="{i18n>awsys}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox selectedKey="{filterModel>/AWSYS}" change=".onComboBoxChange">
+                                <MultiComboBox selectedKeys="{filterModel>/AWSYS}" change=".onMultiComboBoxChange">
                                     <core:Item key="MISC" text="MISC"/>
                                     <core:Item key="VEHI" text="VEHI"/>
                                     <core:Item key="CONT" text="CONT"/>
                                     <core:Item key="WPM"  text="WPM"/>
                                     <core:Item key="CSPS" text="CSPS"/>
-                                </ComboBox>
+                                </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
@@ -125,9 +131,11 @@
                         <!-- KUNNR (Client Code, dropdown with search, filtered by BUKRS) -->
                         <fb:FilterGroupItem name="KUNNR" label="{i18n>kunnr}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <ComboBox selectedKey="{filterModel>/KUNNR}" showSecondaryValues="true" filterSuggests="true" items="{ClientCodeModel>/Clients}" change=".onComboBoxChange">
-                                    <core:Item key="{ClientCodeModel>KUNNR}" text="{ClientCodeModel>KUNNR}" additionalText="{ClientCodeModel>Name}"/>
-                                </ComboBox>
+                                 <MultiComboBox selectedKeys="{filterModel>/KUNNR}" change=".onMultiComboBoxChange">
+                                    <core:Item key="126127" text="126127"/>
+                                    <core:Item key="126072" text="126072"/>
+                                    <core:Item key="124938" text="124938"/>
+                                </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
@@ -142,7 +150,7 @@
 				width="100%"
 				visibleRowCountMode="Auto"
 				minAutoRowCount="5"
-				selectionMode="Single"
+				selectionMode="Multi"
 				fixedColumnCount="4"
 				rows="{ path: 'app>/rows' }">
 				<table:extension>
@@ -173,18 +181,16 @@
 							<Text text="{app>GJAHR}"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="15rem">
+					<table:Column width="5rem">
 						<table:template>
 						<HBox>
 							<Button 
-								text="{i18n>mainHistoryBtn}" 
 								type="Transparent" 
 								icon="sap-icon://history"
 								press=".onHistoryPressed"
 								tooltip="{i18n>mainHistoryTooltip}"/>
 
 							<Button 
-								text="{i18n>mainAckUserBtn}" 
 								type="Transparent" 
 								icon="sap-icon://account"
 								press=".onAckUserPressed"

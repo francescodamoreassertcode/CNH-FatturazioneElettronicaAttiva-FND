@@ -26,23 +26,26 @@ function (JSONModel, Device) {
                 BELNR: [],
 
                 // Year range (two dates, default current year)
-                YearFrom: new Date().getFullYear().toString(),
-                YearTo: new Date().getFullYear().toString(),
+                YearFrom: "",
+                YearTo: "",
+                YearRange: "",
 
-                // Document Date (single date)
-                BLDAT: null,
+                // Document Date (date range)
+                BLDATFrom: null,
+                BLDATTo: null,
+                BLDATRange: "",
 
-                // Document Type (dropdown, single selection)
-                BLART: "",
+                // Document Type (multi selection)
+                BLART: [],
 
                 // Origin System (dropdown, single selection)
-                AWSYS: "",
+                AWSYS: [],
 
                 // Status (multi select)
                 STATUS: [],
 
-                // Client Code (dropdown with search, single selection)
-                KUNNR: ""
+                // Client Code (multi selection)
+                KUNNR: []
             });
 
             return oModel;
@@ -133,6 +136,90 @@ function (JSONModel, Device) {
                         ACK_TIME: "",
                         ACK_USER: "",
                         ACK_USER_DESCR: "",
+                        AWSYS: "CONT"
+                    },
+                    {
+                        BUKRS: "G042",
+                        BELNR: "2575000012",
+                        GJAHR: "2025",
+                        FISC_RAP: "",
+                        INV_TYPE: "380",
+                        BLART: "EG",
+                        BLDAT: "2025-01-15",
+                        BUDAT: "2025-01-15",
+                        CURRENCY: "EUR",
+                        VBELN: "301211227",
+                        DOC_TYPE_BTP: "",
+                        KUNNR: "126127",
+                        COUNTRY: "BE",
+                        KSEF_ID: "",
+                        KSEF_DATE: "",
+                        STATUS: "05-BTP_ERR",
+                        INSERT_DATE: "2025-01-15",
+                        UPDATE_DATE: "2025-01-15",
+                        USER_UPDATE: "SYSTEM",
+                        ACK_CODE: "ACK0_KO",
+                        ACK_DESCRIPTION: "Refusal from DT",
+                        ACK_DATE: "2025-01-15",
+                        ACK_TIME: "14:30:00",
+                        ACK_USER: "DT_SYSTEM",
+                        ACK_USER_DESCR: "DT System Rejection",
+                        AWSYS: "VEHI"
+                    },
+                    {
+                        BUKRS: "G042",
+                        BELNR: "2556000004",
+                        GJAHR: "2025",
+                        FISC_RAP: "",
+                        INV_TYPE: "381",
+                        BLART: "FG",
+                        BLDAT: "2025-01-18",
+                        BUDAT: "2025-01-18",
+                        CURRENCY: "EUR",
+                        VBELN: "6000619300",
+                        DOC_TYPE_BTP: "",
+                        KUNNR: "126072",
+                        COUNTRY: "BE",
+                        KSEF_ID: "",
+                        KSEF_DATE: "",
+                        STATUS: "08-COMPLETED",
+                        INSERT_DATE: "2025-01-18",
+                        UPDATE_DATE: "2025-01-18",
+                        USER_UPDATE: "SYSTEM",
+                        ACK_CODE: "ACK0_OK",
+                        ACK_DESCRIPTION: "Acceptance from DT",
+                        ACK_DATE: "2025-01-18",
+                        ACK_TIME: "16:45:00",
+                        ACK_USER: "DT_SYSTEM",
+                        ACK_USER_DESCR: "DT System Acceptance",
+                        AWSYS: "MISC"
+                    },
+                    {
+                        BUKRS: "G042",
+                        BELNR: "2551000382",
+                        GJAHR: "2025",
+                        FISC_RAP: "",
+                        INV_TYPE: "380",
+                        BLART: "EA",
+                        BLDAT: "2025-01-22",
+                        BUDAT: "2025-01-22",
+                        CURRENCY: "EUR",
+                        VBELN: "9900006942",
+                        DOC_TYPE_BTP: "",
+                        KUNNR: "124938",
+                        COUNTRY: "BE",
+                        KSEF_ID: "",
+                        KSEF_DATE: "2025-01-22",
+                        STATUS: "08-COMPLETED",
+                        INSERT_DATE: "2025-01-22",
+                        UPDATE_DATE: "2025-01-22",
+                        USER_UPDATE: "SYSTEM",
+                        ACK_CODE: "AERC",
+                        ACK_DESCRIPTION: "Government delivery receipt",
+                        ACK_DATE: "2025-01-22",
+                        ACK_TIME: "10:15:00",
+                        ACK_USER: "BE_SYSTEM",
+                        ACK_USER_DESCR: "BE Government System",
                         AWSYS: "CONT"
                     }
                 ]
