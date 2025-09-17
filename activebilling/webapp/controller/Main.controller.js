@@ -408,8 +408,8 @@ sap.ui.define([
                 return JSON.parse(JSON.stringify(oContextData));
             });
 
-            // Validate ACK_CODE for all selected records
-            const aInvalidRecords = aSelectedRecords.filter(record => record.ACK_CODE !== "5");
+            // Validate STATUS for all selected records
+            const aInvalidRecords = aSelectedRecords.filter(record => record.STATUS !== "05-BTP_ERR");
             if (aInvalidRecords.length > 0) {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
@@ -794,6 +794,7 @@ sap.ui.define([
         _openHistoryDialog: function() {
             if (!this._oHistoryDialog) {
                 this._oHistoryDialog = sap.ui.xmlfragment(
+                    "historyDialogFragment",
                     "cnh.ab.activebilling.view.dialogs.HistoryDialog",
                     this
                 );
@@ -826,7 +827,15 @@ sap.ui.define([
         },
 
         onDownloadCsvPressed: function(oEvent) {
-            const oHistoryTable = this.byId("historyTable");
+            // Now we can use the fragment ID to access the table
+            const oHistoryTable = sap.ui.core.Fragment.byId("historyDialogFragment", "historyTable");
+            
+            if (!oHistoryTable) {
+                console.error("History table not found in fragment");
+                MessageBox.error("Unable to access history table");
+                return;
+            }
+            
             const aSelectedIndices = oHistoryTable.getSelectedIndices();
 
             if (aSelectedIndices.length === 0) {
@@ -834,37 +843,26 @@ sap.ui.define([
                 return;
             }
 
-            // Get all selected history records
-            const aSelectedRecords = aSelectedIndices.map(iIndex => {
-                const oContextData = oHistoryTable.getContextByIndex(iIndex).getObject();
-                return oContextData.getObject();
-            });
+            // Check if more than one row is selected - show error
+            if (aSelectedIndices.length > 1) {
+                MessageBox.error(this._getText("multipleHistoryRecordsError"));
+                return;
+            }
 
-            // Filter records that have CSV files
-            const aRecordsWithCsv = aSelectedRecords.filter(record => record.FILE_NAME);
-            
-            if (aRecordsWithCsv.length === 0) {
+            // Get the single selected history record
+            const oContextData = oHistoryTable.getContextByIndex(aSelectedIndices[0]).getObject();
+
+            // Validate that the record has a CSV file
+            if (!oContextData.FILE_NAME) {
                 MessageBox.error(this._getText("noCsvFileAvailable"));
                 return;
             }
 
-            // Process downloads for all selected records with CSV files
-            const aFileNames = aRecordsWithCsv.map(record => record.FILE_NAME);
-            
             // TODO: Replace with real API call to download CSV
-            // Example: aRecordsWithCsv.forEach(record => {
-            //     window.open(`${this.baseUrl}/downloadCsv?fileId=${record.FILE_CONTENT_ID}`)
-            // });
+            // Example: window.open(`${this.baseUrl}/downloadCsv?fileId=${oHistoryRecord.FILE_CONTENT_ID}`)
             
-            let sMessage;
-            if (aRecordsWithCsv.length === 1) {
-                sMessage = this._getText("csvDownloadStarted", [aFileNames[0]]);
-            } else {
-                const sBaseMessage = this._getText("csvDownloadStartedMultiple", [aRecordsWithCsv.length]);
-                const sFileList = aFileNames.join('\n');
-                sMessage = `${sBaseMessage}\n\nFiles to download:\n${sFileList}`;
-            }
-            MessageBox.information(sMessage);
+            // Show success message
+            MessageBox.success(this._getText("csvDownloadSuccess", [oContextData.FILE_NAME]));
         },
 
         // Language selector functionality
