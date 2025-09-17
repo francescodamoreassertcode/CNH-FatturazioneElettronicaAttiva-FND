@@ -31,8 +31,8 @@ function (JSONModel, Device) {
                 YearRange: "",
 
                 // Document Date (date range)
-                BLDATFrom: null,
-                BLDATTo: null,
+                BLDATFrom: "",
+                BLDATTo: "",
                 BLDATRange: "",
 
                 // Document Type (multi selection)

@@ -225,8 +225,8 @@ sap.ui.define([
                     BELNR: [],
                     YearFrom: new Date().getFullYear().toString(),
                     YearTo: new Date().getFullYear().toString(),
-                    BLDATFrom: null,
-                    BLDATTo: null,
+                    BLDATFrom: "",
+                    BLDATTo: "",
                     BLDATRange: "",
                     BLART: [],
                     AWSYS: [],
@@ -269,7 +269,16 @@ sap.ui.define([
                   sValue = oDateRangeSelection.getValue(),
                   oFilterModel = this.getView().getModel("filterModel");
 
-            if (oFilterModel && sValue) {
+            if (oFilterModel) {
+                // Handle empty/cleared values
+                if (!sValue || sValue.trim() === "") {
+                    oFilterModel.setProperty("/BLDATFrom", "");
+                    oFilterModel.setProperty("/BLDATTo", "");
+                    oFilterModel.setProperty("/BLDATRange", "");
+                    console.log("Cleared BLDAT range");
+                    return;
+                }
+
                 // DateRangeSelection returns value in format "dd/MM/yyyy - dd/MM/yyyy" or "dd/MM/yyyy"
                 const aDateParts = sValue.split(" - ").map(s => s.trim());
                 console.log("BLDAT DateRangeSelection value:", sValue, "Split parts:", aDateParts);
@@ -311,7 +320,16 @@ sap.ui.define([
                   sValue = oDateRangeSelection.getValue(),
                   oFilterModel = this.getView().getModel("filterModel");
 
-            if (oFilterModel && sValue) {
+            if (oFilterModel) {
+                // Handle empty/cleared values
+                if (!sValue || sValue.trim() === "") {
+                    oFilterModel.setProperty("/YearFrom", "");
+                    oFilterModel.setProperty("/YearTo", "");
+                    oFilterModel.setProperty("/YearRange", "");
+                    console.log("Cleared year range");
+                    return;
+                }
+
                 const aYearParts = sValue.split(" - ").map(s => s.trim());
                 if (aYearParts.length === 2) {
                     const sFromYear = aYearParts[0],
@@ -408,8 +426,8 @@ sap.ui.define([
                 return JSON.parse(JSON.stringify(oContextData));
             });
 
-            // Validate STATUS for all selected records
-            const aInvalidRecords = aSelectedRecords.filter(record => record.STATUS !== "05-BTP_ERR");
+            // Validate ACK_CODE for all selected records
+            const aInvalidRecords = aSelectedRecords.filter(record => record.ACK_CODE !== "5");
             if (aInvalidRecords.length > 0) {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
