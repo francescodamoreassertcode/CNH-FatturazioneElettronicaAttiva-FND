@@ -6,8 +6,9 @@ sap.ui.define([
     "sap/ui/model/FilterOperator",
     "sap/ui/model/json/JSONModel",
     "cnh/ab/activebilling/utils/Formatter",
-    "sap/m/MessageToast"
-], (BaseController, MessageBox, Token, Filter, FilterOperator, JSONModel, Formatter, MessageToast) => {
+    "sap/m/MessageToast",
+    "cnh/ab/activebilling/utils/ServiceConfig"
+], (BaseController, MessageBox, Token, Filter, FilterOperator, JSONModel, Formatter, MessageToast, ServiceConfig) => {
     "use strict";
 
     return BaseController.extend("cnh.ab.activebilling.controller.Main", {
@@ -23,6 +24,9 @@ sap.ui.define([
             
             // Initialize language selector
             this._initLanguageSelector();
+
+            // Simple test call
+            this._testConnection();
         },
 
         onAfterRendering: function() {
@@ -916,7 +920,22 @@ sap.ui.define([
                 this._oHistoryDialog.destroy();
                 this._oHistoryDialog = null;
             }
+        },
+        
+        // Simple test connection method
+        _testConnection: function() {
+            // Test metadata
+            fetch(ServiceConfig.getServiceRootUrl() + "$metadata")
+                .then(response => console.log("Metadata:", response.status))
+                .catch(error => console.log("Metadata Error:", error));
+
+            // Test document list
+            fetch(ServiceConfig.getServiceUrl("documentList"))
+                .then(response => console.log("Document List:", response.status))
+                .catch(error => console.log("Document List Error:", error));
         }
+
+
 
     });
 });

@@ -15,6 +15,9 @@ server:
             - /resources
             - /test-resources
           url: https://ui5.sap.com
+        backend:
+          - path: /odata/v4/catalg
+            destination: EINV_CAP_BackEnd_SRV
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

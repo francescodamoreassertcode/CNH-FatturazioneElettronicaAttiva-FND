@@ -14,6 +14,16 @@
       "id": "@sap/generator-fiori:basic",
       "version": "1.18.6",
       "toolsId": "6a55c49e-261b-4a3f-b8eb-974e4fd4b93e"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/catalg/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "4.0"
+        }
+      }
     }
   },
   "sap.ui": {
@@ -50,6 +60,16 @@
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
           "bundleName": "cnh.ab.activebilling.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "type": "sap.ui.model.odata.v4.ODataModel",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
         }
       }
     },
