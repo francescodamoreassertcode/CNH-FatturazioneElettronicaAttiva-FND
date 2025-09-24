@@ -24,9 +24,6 @@ sap.ui.define([
             
             // Initialize language selector
             this._initLanguageSelector();
-
-            // Simple test call
-            this._testConnection();
         },
 
         onAfterRendering: function() {
@@ -52,7 +49,7 @@ sap.ui.define([
 
          onRouteMatched: function () {
             this._oBundleI18n = this.getOwnerComponent().getModel("i18n").getResourceBundle();
-            console.log("This works apparently");
+            this._loadDocumentData();
         },
 
         onSearch: function() {
@@ -922,17 +919,32 @@ sap.ui.define([
             }
         },
         
-        // Simple test connection method
-        _testConnection: function() {
-            // Test metadata
-            fetch(ServiceConfig.getServiceRootUrl() + "$metadata")
-                .then(response => console.log("Metadata:", response.status))
-                .catch(error => console.log("Metadata Error:", error));
-
-            // Test document list
+        // Load document data from OData service into app model
+        _loadDocumentData: function() {
+            const oAppModel = this.getView().getModel("app");
+            if (!oAppModel) {
+                return;
+            }
             fetch(ServiceConfig.getServiceUrl("documentList"))
-                .then(response => console.log("Document List:", response.status))
-                .catch(error => console.log("Document List Error:", error));
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        oAppModel.setProperty("/rows", data.value);
+                        MessageToast.show(`Loaded ${data.value.length} documents`);
+                    } else {
+                        oAppModel.setProperty("/rows", []);
+                        MessageToast.show("No documents found");
+                    }
+                })
+                .catch(error => {
+                    MessageToast.show("Failed to load documents");
+                    oAppModel.setProperty("/rows", []);
+                });
         }
 
 
