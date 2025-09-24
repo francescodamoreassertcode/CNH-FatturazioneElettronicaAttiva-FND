@@ -627,7 +627,7 @@ sap.ui.define([
             const oClonedData = JSON.parse(JSON.stringify(oContextData));
 
             // Validate ACK_CODE
-            if (oClonedData.ACK_CODE !== "5") {
+            if (oClonedData.ACK_CODE !== "ACK0_KO") {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
             }
