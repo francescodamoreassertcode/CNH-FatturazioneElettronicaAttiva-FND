@@ -73,8 +73,7 @@
 									change=".onYearChange"
 									displayFormat="yyyy"
 									valueFormat="yyyy"
-									width="100%"
-									placeholder="{i18n>selectYear}" />
+									width="100%"/>
                             </fb:control>
                         </fb:FilterGroupItem>
 
