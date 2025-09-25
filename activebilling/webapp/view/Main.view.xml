@@ -67,11 +67,14 @@
                         <!-- GJAHR (Year range, default current year) -->
                         <fb:FilterGroupItem name="GJAHR" label="{i18n>gjahr}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <DateRangeSelection
-									id="yearRangeSelection"
+                                <DatePicker
+									id="yearSelection"
+									value="{filterModel>/GJAHR}"
+									change=".onYearChange"
 									displayFormat="yyyy"
-									change=".onDateRangeChange"
-									value="{filterModel>/YearRange}" />
+									valueFormat="yyyy"
+									width="100%"
+									placeholder="{i18n>selectYear}" />
                             </fb:control>
                         </fb:FilterGroupItem>
 
@@ -150,11 +153,11 @@
 				visibleRowCountMode="Auto"
 				minAutoRowCount="5"
 				selectionMode="Multi"
-				fixedColumnCount="4"
+				fixedColumnCount="5"
 				rows="{ path: 'app>/rows' }">
 				<table:extension>
 					<OverflowToolbar class="sapUiMediumMarginTop">
-						<Title text="{i18n>DocumentListTable}" level="H2"/>
+						<Title text="{i18n>DocumentListTable} ({= ${app>/rows}.length})" level="H2"/>
 						<ToolbarSpacer/>
 						<Button text="{i18n>ResendBtn}" type="Emphasized" customData:function="Resend" press=".onTableBtnPressed"/>
 						<Button text="{i18n>CancelBtn}" type="Emphasized" customData:function="Cancel" press=".onTableBtnPressed"/>
@@ -162,42 +165,124 @@
 					</OverflowToolbar>
 				</table:extension>
 				<table:columns>
+					<!-- 1. Company -->
 					<table:Column width="8rem" sortProperty="BUKRS" filterProperty="BUKRS">
 						<Label text="{i18n>bukrs}"/>
 						<table:template>
 							<Text text="{app>BUKRS}"/>
 						</table:template>
 					</table:Column>
+					
+					<!-- 2. Document number -->
 					<table:Column width="10rem" sortProperty="BELNR" filterProperty="BELNR">
 						<Label text="{i18n>belnr}"/>
 						<table:template>
 							<Text text="{app>BELNR}"/>
 						</table:template>
 					</table:Column>
+					
+					<!-- 3. Year -->
 					<table:Column width="6rem" sortProperty="GJAHR" filterProperty="GJAHR">
 						<Label text="{i18n>gjahr}"/>
 						<table:template>
 							<Text text="{app>GJAHR}"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="5rem">
+					
+					<!-- 4. Status (with badges) -->
+					<table:Column width="12rem" sortProperty="STATUS" filterProperty="STATUS">
+						<Label text="{i18n>status}"/>
 						<table:template>
-						<HBox>
-							<Button 
-								type="Transparent" 
-								icon="sap-icon://history"
-								press=".onHistoryPressed"
-								tooltip="{i18n>mainHistoryTooltip}"/>
-
-							<Button 
-								type="Transparent" 
-								icon="sap-icon://account"
-								press=".onAckUserPressed"
-								enabled="{= (${app>STATUS} === '05-BTP_ERR' || ${app>ACK_USER} !== '') &amp;&amp; (${app>STATUS} === '01-NEW' || ${app>STATUS} === '02-WAIT' || ${app>STATUS} === '03-SENT' || ${app>STATUS} === '05-BTP_ERR' || ${app>STATUS} === '06-DT_ERR' || ${app>STATUS} === '09-COMM_ERR')}"
-								tooltip="{i18n>mainAckUserTooltip}"/>
-						</HBox>
+							<VBox>
+								<Text text="{app>STATUS}" class="btnStatusNew" visible="{= ${app>STATUS} === '01-NEW'}"/>
+								<Text text="{app>STATUS}" class="btnStatusWait" visible="{= ${app>STATUS} === '02-WAIT'}"/>
+								<Text text="{app>STATUS}" class="btnStatusSent" visible="{= ${app>STATUS} === '03-SENT'}"/>
+								<Text text="{app>STATUS}" class="btnStatusCanc" visible="{= ${app>STATUS} === '04-CANC'}"/>
+								<Text text="{app>STATUS}" class="btnStatusBtpErr" visible="{= ${app>STATUS} === '05-BTP_ERR'}"/>
+								<Text text="{app>STATUS}" class="btnStatusDtErr" visible="{= ${app>STATUS} === '06-DT_ERR'}"/>
+								<Text text="{app>STATUS}" class="btnStatusResend" visible="{= ${app>STATUS} === '07-RESEND'}"/>
+								<Text text="{app>STATUS}" class="btnStatusCompleted" visible="{= ${app>STATUS} === '08-COMPLETED'}"/>
+								<Text text="{app>STATUS}" class="btnStatusCommErr" visible="{= ${app>STATUS} === '09-COMM_ERR'}"/>
+							</VBox>
 						</table:template>
 					</table:Column>
+					
+					<!-- 5. Buttons (History & Ack User) -->
+					<table:Column width="5rem">
+						<table:template>
+							<HBox>
+								<Button 
+									type="Transparent" 
+									icon="sap-icon://history"
+									press=".onHistoryPressed"
+									tooltip="{i18n>mainHistoryTooltip}"/>
+								<Button 
+									type="Transparent" 
+									icon="sap-icon://account"
+									press=".onAckUserPressed"
+									enabled="{= (${app>STATUS} === '05-BTP_ERR' || ${app>ACK_USER} !== '') &amp;&amp; (${app>STATUS} === '01-NEW' || ${app>STATUS} === '02-WAIT' || ${app>STATUS} === '03-SENT' || ${app>STATUS} === '05-BTP_ERR' || ${app>STATUS} === '06-DT_ERR' || ${app>STATUS} === '09-COMM_ERR')}"
+									tooltip="{i18n>mainAckUserTooltip}"/>
+							</HBox>
+						</table:template>
+					</table:Column>
+					
+					<!-- 6. Invoice type -->
+					<table:Column width="10rem" sortProperty="INV_TYPE" filterProperty="INV_TYPE">
+						<Label text="{i18n>inv_type}"/>
+						<table:template>
+							<Text text="{app>INV_TYPE}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 7. Posting date -->
+					<table:Column width="10rem" sortProperty="BUDAT" filterProperty="BUDAT">
+						<Label text="{i18n>budat}"/>
+						<table:template>
+							<Text text="{ path: 'app>BUDAT', formatter: '.formatter.formatIsoToDMYDash' }"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 8. Document type -->
+					<table:Column width="8rem" sortProperty="BLART" filterProperty="BLART">
+						<Label text="{i18n>blart}"/>
+						<table:template>
+							<Text text="{app>BLART}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 9. Currency -->
+					<table:Column width="8rem" sortProperty="CURRENCY" filterProperty="CURRENCY">
+						<Label text="{i18n>currency}"/>
+						<table:template>
+							<Text text="{app>CURRENCY}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 10. Invoice SD -->
+					<table:Column width="10rem" sortProperty="VBELN" filterProperty="VBELN">
+						<Label text="{i18n>vbeln}"/>
+						<table:template>
+							<Text text="{app>VBELN}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 11. Client code -->
+					<table:Column width="10rem" sortProperty="KUNNR" filterProperty="KUNNR">
+						<Label text="{i18n>kunnr}"/>
+						<table:template>
+							<Text text="{app>KUNNR}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- 12. Document date -->
+					<table:Column width="10rem" sortProperty="BLDAT" filterProperty="BLDAT">
+						<Label text="{i18n>bldat}"/>
+						<table:template>
+							<Text text="{ path: 'app>BLDAT', formatter: '.formatter.formatIsoToDMYDash' }"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- Remaining columns (not removed) -->
 					<table:Column width="8rem" sortProperty="FISC_RAP" filterProperty="FISC_RAP">
 						<Label text="{i18n>fisc_rap}"/>
 						<table:template>
@@ -205,52 +290,10 @@
 								enabled="false"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="10rem" sortProperty="INV_TYPE" filterProperty="INV_TYPE">
-						<Label text="{i18n>inv_type}"/>
-						<table:template>
-							<Text text="{app>INV_TYPE}"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="8rem" sortProperty="BLART" filterProperty="BLART">
-						<Label text="{i18n>blart}"/>
-						<table:template>
-							<Text text="{app>BLART}"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="10rem" sortProperty="BLDAT" filterProperty="BLDAT">
-						<Label text="{i18n>bldat}"/>
-						<table:template>
-							<Text text="{ path: 'app>BLDAT', formatter: '.formatter.formatIsoToDMYDash' }"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="10rem" sortProperty="BUDAT" filterProperty="BUDAT">
-						<Label text="{i18n>budat}"/>
-						<table:template>
-							<Text text="{ path: 'app>BUDAT', formatter: '.formatter.formatIsoToDMYDash' }"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="8rem" sortProperty="CURRENCY" filterProperty="CURRENCY">
-						<Label text="{i18n>currency}"/>
-						<table:template>
-							<Text text="{app>CURRENCY}"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="10rem" sortProperty="VBELN" filterProperty="VBELN">
-						<Label text="{i18n>vbeln}"/>
-						<table:template>
-							<Text text="{app>VBELN}"/>
-						</table:template>
-					</table:Column>
 					<table:Column width="12rem" sortProperty="DOC_TYPE_BTP" filterProperty="DOC_TYPE_BTP">
 						<Label text="{i18n>doc_type_btp}"/>
 						<table:template>
 							<Text text="{app>DOC_TYPE_BTP}"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="10rem" sortProperty="KUNNR" filterProperty="KUNNR">
-						<Label text="{i18n>kunnr}"/>
-						<table:template>
-							<Text text="{app>KUNNR}"/>
 						</table:template>
 					</table:Column>
 					<table:Column width="10rem" sortProperty="COUNTRY" filterProperty="COUNTRY">
@@ -271,30 +314,6 @@
 							<Text text="{ path: 'app>KSEF_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="10rem" sortProperty="STATUS" filterProperty="STATUS">
-						<Label text="{i18n>status}"/>
-						<table:template>
-							<Text text="{app>STATUS}"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="12rem" sortProperty="INSERT_DATE" filterProperty="INSERT_DATE">
-						<Label text="{i18n>insert_date}"/>
-						<table:template>
-							<Text text="{ path: 'app>INSERT_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="12rem" sortProperty="UPDATE_DATE" filterProperty="UPDATE_DATE">
-						<Label text="{i18n>update_date}"/>
-						<table:template>
-							<Text text="{ path: 'app>UPDATE_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="12rem" sortProperty="USER_UPDATE" filterProperty="USER_UPDATE">
-						<Label text="{i18n>user_update}"/>
-						<table:template>
-							<Text text="{app>USER_UPDATE}"/>
-						</table:template>
-					</table:Column>
 					<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
 						<Label text="{i18n>ack_code}"/>
 						<table:template>
@@ -307,26 +326,14 @@
 							<Text text="{app>ACK_DESCRIPTION}"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="10rem" sortProperty="ACK_DATE" filterProperty="ACK_DATE">
-						<Label text="{i18n>ack_date}"/>
-						<table:template>
-							<Text text="{ path: 'app>ACK_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
-						</table:template>
-					</table:Column>
-					<table:Column width="10rem" sortProperty="ACK_TIME" filterProperty="ACK_TIME">
-						<Label text="{i18n>ack_time}"/>
-						<table:template>
-							<Text text="{ path: 'app>ACK_TIME', formatter: '.formatter.formatTimeString' }"/>
-						</table:template>
-					</table:Column>
 					<table:Column width="12rem" sortProperty="ACK_USER" filterProperty="ACK_USER">
-						<Label text="{i18n>ack_user}"/>
+						<Label text="{i18n>status_user}"/>
 						<table:template>
 							<Text text="{app>ACK_USER}"/>
 						</table:template>
 					</table:Column>
 					<table:Column width="16rem" sortProperty="ACK_USER_DESCR" filterProperty="ACK_USER_DESCR">
-						<Label text="{i18n>ack_user_descr}"/>
+						<Label text="{i18n>status_user_description}"/>
 						<table:template>
 							<Text text="{app>ACK_USER_DESCR}"/>
 						</table:template>

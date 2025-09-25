@@ -17,3 +17,103 @@
 .minorClass > div > input {
     font-size: 0.75rem !Important;
 }
+
+/* Status Badge Styles */
+.btnStatusNew {
+    background-color: #8ED973;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #8ED973;
+    padding: 0% 22%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusWait {
+    background-color: #FFFF00;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FFFF00;
+    padding: 0% 22%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusSent {
+    background-color: #FFFF00;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FFFF00;
+    padding: 0% 22%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusCanc {
+    background-color: #D9D9D9;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #D9D9D9;
+    padding: 0% 18%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusBtpErr {
+    background-color: #FF6B6B;
+    color: White;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FF6B6B;
+    padding: 0% 15%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusDtErr {
+    background-color: #FF6B6B;
+    color: White;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FF6B6B;
+    padding: 0% 15%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusResend {
+    background-color: #FFCC00;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FFCC00;
+    padding: 0% 15%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusCompleted {
+    background-color: #A6C9EC;
+    color: Black;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #A6C9EC;
+    padding: 0% 15%;
+    margin: 5% 0%;
+    text-align: center;
+}
+
+.btnStatusCommErr {
+    background-color: #FF6B6B;
+    color: White;
+    font-weight: bold;
+    border-radius: 20px;
+    border: 3px solid #FF6B6B;
+    padding: 0% 15%;
+    margin: 5% 0%;
+    text-align: center;
+}

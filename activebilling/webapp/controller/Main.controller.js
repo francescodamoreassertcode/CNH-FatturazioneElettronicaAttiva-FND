@@ -316,36 +316,16 @@ sap.ui.define([
             }
         },
 
-        onDateRangeChange: function(oEvent) {
-            const oDateRangeSelection = oEvent.getSource(),
-                  sValue = oDateRangeSelection.getValue(),
+         onYearChange: function(oEvent) {
+            const oDatePicker = oEvent.getSource(),
+                  sValue = oDatePicker.getValue(),
                   oFilterModel = this.getView().getModel("filterModel");
 
             if (oFilterModel) {
-                // Handle empty/cleared values
-                if (!sValue || sValue.trim() === "") {
-                    oFilterModel.setProperty("/YearFrom", "");
-                    oFilterModel.setProperty("/YearTo", "");
-                    oFilterModel.setProperty("/YearRange", "");
-                    console.log("Cleared year range");
-                    return;
-                }
-
-                const aYearParts = sValue.split(" - ").map(s => s.trim());
-                if (aYearParts.length === 2) {
-                    const sFromYear = aYearParts[0],
-                          sToYear = aYearParts[1];
-                    
-                    if (sFromYear && sToYear) {
-                        oFilterModel.setProperty("/YearFrom", sFromYear);
-                        oFilterModel.setProperty("/YearTo", sToYear);
-                    }
-                } else if (aYearParts.length === 1) {
-                    const sYear = aYearParts[0].trim();
-                    if (sYear) {
-                        oFilterModel.setProperty("/YearFrom", sYear);
-                        oFilterModel.setProperty("/YearTo", sYear);
-                    }
+                if (sValue) {
+                    oFilterModel.setProperty("/GJAHR", sValue);
+                } else {
+                    oFilterModel.setProperty("/GJAHR", "");
                 }
             }
         },
