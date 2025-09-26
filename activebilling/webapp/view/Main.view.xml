@@ -64,7 +64,7 @@
                             </fb:control>
                         </fb:FilterGroupItem>
 
-                        <!-- GJAHR (Year range, default current year) -->
+                        <!-- GJAHR (Year selection, single year with DatePicker) -->
                         <fb:FilterGroupItem name="GJAHR" label="{i18n>gjahr}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <DatePicker
@@ -91,23 +91,17 @@
                         <!-- BLART (Document Type, multi selection) -->
                         <fb:FilterGroupItem name="BLART" label="{i18n>blart}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox selectedKeys="{filterModel>/BLART}" change=".onMultiComboBoxChange">
-                                    <core:Item key="EG" text="EG"/>
-                                    <core:Item key="FG" text="FG"/>
-                                    <core:Item key="EA" text="EA"/>
+                                <MultiComboBox selectedKeys="{filterModel>/BLART}" change=".onMultiComboBoxChange" items="{filterModel>/documentTypes}">
+                                    <core:Item key="{key}" text="{text}"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
-                        <!-- AWSYS (Origin System, match code dropdown, fixed values) -->
+                        <!-- AWSYS (Origin System, match code dropdown, dynamic values) -->
                         <fb:FilterGroupItem name="AWSYS" label="{i18n>awsys}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox selectedKeys="{filterModel>/AWSYS}" change=".onMultiComboBoxChange">
-                                    <core:Item key="MISC" text="MISC"/>
-                                    <core:Item key="VEHI" text="VEHI"/>
-                                    <core:Item key="CONT" text="CONT"/>
-                                    <core:Item key="WPM"  text="WPM"/>
-                                    <core:Item key="CSPS" text="CSPS"/>
+                                <MultiComboBox selectedKeys="{filterModel>/AWSYS}" change=".onMultiComboBoxChange" items="{filterModel>/originSystems}">
+                                    <core:Item key="{key}" text="{text}"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -116,28 +110,29 @@
                         <fb:FilterGroupItem name="STATUS" label="{i18n>status}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox selectedKeys="{filterModel>/STATUS}" change=".onMultiComboBoxChange">
-                                    <core:Item key="01-NEW" text="01-NEW"/>
-                                    <core:Item key="02-WAIT" text="02-WAIT"/>
-                                    <core:Item key="03-SENT" text="03-SENT"/>
-                                    <core:Item key="04-CANC" text="04-CANC"/>
-                                    <core:Item key="05-BTP_ERR" text="05-BTP_ERR"/>
-                                    <core:Item key="06-DT_ERR" text="06-DT_ERR"/>
-                                    <core:Item key="07-RESEND" text="07-RESEND"/>
-                                    <core:Item key="08-COMPLETED" text="08-COMPLETED"/>
-                                    <core:Item key="09-COMM_ERR" text="09-COMM_ERR"/>
+                                    <core:Item key="01" text="01-NEW"/>
+                                    <core:Item key="02" text="02-WAIT"/>
+                                    <core:Item key="03" text="03-SENT"/>
+                                    <core:Item key="04" text="04-CANC"/>
+                                    <core:Item key="05" text="05-BTP_ERR"/>
+                                    <core:Item key="06" text="06-DT_ERR"/>
+                                    <core:Item key="07" text="07-RESEND"/>
+                                    <core:Item key="08" text="08-COMPLETED"/>
+                                    <core:Item key="09" text="09-COMM_ERR"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
 
                         <!-- KUNNR (Client Code, multi selection) -->
-                        <fb:FilterGroupItem name="KUNNR" label="{i18n>kunnr}" groupName="Group1" visibleInFilterBar="true">
-                            <fb:control>
-                                <MultiComboBox selectedKeys="{filterModel>/KUNNR}" change=".onMultiComboBoxChange">
-                                    <core:Item key="126127" text="126127"/>
-                                    <core:Item key="126072" text="126072"/>
-                                    <core:Item key="124938" text="124938"/>
-                                </MultiComboBox>
-                            </fb:control>
+							<fb:FilterGroupItem name="KUNNR" label="{i18n>kunnr}" groupName="Group1" visibleInFilterBar="true">
+								<fb:control>
+									<MultiInput customData:prop="KUNNR"
+												showSuggestion="false"
+												width="70%"
+												showValueHelp="false"
+												tokenUpdate=".onMultiInputTokenUpdate"
+												change=".onMultiInputChange" />
+								</fb:control>
                         </fb:FilterGroupItem>
 
                     </fb:filterGroupItems>
@@ -160,7 +155,6 @@
 						<ToolbarSpacer/>
 						<Button text="{i18n>ResendBtn}" type="Emphasized" customData:function="Resend" press=".onTableBtnPressed"/>
 						<Button text="{i18n>CancelBtn}" type="Emphasized" customData:function="Cancel" press=".onTableBtnPressed"/>
-						<!-- <Button text="Visualizza HTML" type="Emphasized" press="onDisplayHTML"/> -->
 					</OverflowToolbar>
 				</table:extension>
 				<table:columns>
@@ -193,15 +187,15 @@
 						<Label text="{i18n>status}"/>
 						<table:template>
 							<VBox>
-								<Text text="{app>STATUS}" class="btnStatusNew" visible="{= ${app>STATUS} === '01-NEW'}"/>
-								<Text text="{app>STATUS}" class="btnStatusWait" visible="{= ${app>STATUS} === '02-WAIT'}"/>
-								<Text text="{app>STATUS}" class="btnStatusSent" visible="{= ${app>STATUS} === '03-SENT'}"/>
-								<Text text="{app>STATUS}" class="btnStatusCanc" visible="{= ${app>STATUS} === '04-CANC'}"/>
-								<Text text="{app>STATUS}" class="btnStatusBtpErr" visible="{= ${app>STATUS} === '05-BTP_ERR'}"/>
-								<Text text="{app>STATUS}" class="btnStatusDtErr" visible="{= ${app>STATUS} === '06-DT_ERR'}"/>
-								<Text text="{app>STATUS}" class="btnStatusResend" visible="{= ${app>STATUS} === '07-RESEND'}"/>
-								<Text text="{app>STATUS}" class="btnStatusCompleted" visible="{= ${app>STATUS} === '08-COMPLETED'}"/>
-								<Text text="{app>STATUS}" class="btnStatusCommErr" visible="{= ${app>STATUS} === '09-COMM_ERR'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusNew" visible="{= ${app>STATUS} === '01'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusWait" visible="{= ${app>STATUS} === '02'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusSent" visible="{= ${app>STATUS} === '03'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCanc" visible="{= ${app>STATUS} === '04'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusBtpErr" visible="{= ${app>STATUS} === '05'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusDtErr" visible="{= ${app>STATUS} === '06'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusResend" visible="{= ${app>STATUS} === '07'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCompleted" visible="{= ${app>STATUS} === '08'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCommErr" visible="{= ${app>STATUS} === '09'}"/>
 							</VBox>
 						</table:template>
 					</table:Column>
@@ -289,19 +283,19 @@
 								enabled="false"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="12rem" sortProperty="DOC_TYPE_BTP" filterProperty="DOC_TYPE_BTP">
+					<!-- <table:Column width="12rem" sortProperty="DOC_TYPE_BTP" filterProperty="DOC_TYPE_BTP">
 						<Label text="{i18n>doc_type_btp}"/>
 						<table:template>
 							<Text text="{app>DOC_TYPE_BTP}"/>
 						</table:template>
-					</table:Column>
+					</table:Column> -->
 					<table:Column width="10rem" sortProperty="COUNTRY" filterProperty="COUNTRY">
 						<Label text="{i18n>country}"/>
 						<table:template>
 							<Text text="{app>COUNTRY}"/>
 						</table:template>
 					</table:Column>
-					<table:Column width="16rem" sortProperty="KSEF_ID" filterProperty="KSEF_ID">
+					<!-- <table:Column width="16rem" sortProperty="KSEF_ID" filterProperty="KSEF_ID">
 						<Label text="{i18n>ksef_id}"/>
 						<table:template>
 							<Text text="{app>KSEF_ID}"/>
@@ -312,7 +306,7 @@
 						<table:template>
 							<Text text="{ path: 'app>KSEF_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
 						</table:template>
-					</table:Column>
+					</table:Column> -->
 					<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
 						<Label text="{i18n>ack_code}"/>
 						<table:template>

@@ -49,7 +49,11 @@ sap.ui.define([
 
          onRouteMatched: function () {
             this._oBundleI18n = this.getOwnerComponent().getModel("i18n").getResourceBundle();
-            this._loadDocumentData();
+            
+            // Load dynamic filter data first, then load documents
+            this._loadFilterData().then(() => {
+                this._loadDocumentData();
+            });
         },
 
         onSearch: function() {
@@ -67,17 +71,16 @@ sap.ui.define([
 
         onClear: function() {
             // Clear all filters and reset to default values
+            // clearAllFilters() already calls _applyFilters() which loads data
             this.clearAllFilters();
         },
 
-        // Main filtering logic - gathers all filter values and applies them to the table
+        // Main filtering logic - calls API with filter parameters
         _applyFilters: function() {
-            const oTable = this.byId("tableDocuments");
             const oFilterModel = this.getView().getModel("filterModel");
-            const oAppModel = this.getView().getModel("app");
             
-            if (!oTable || !oFilterModel || !oAppModel) {
-                console.warn("Missing required models or table for filtering");
+            if (!oFilterModel) {
+                console.warn("Missing FilterModel for filtering");
                 return;
             }
 
@@ -85,135 +88,70 @@ sap.ui.define([
             const oFilterData = oFilterModel.getData();
             console.log("Applying filters with data:", oFilterData);
 
-            // Build filter array based on current filter values
-            const aFilters = this._buildFilters(oFilterModel);
-            console.log("Built filters:", aFilters);
+            // Build OData query parameters from filter data
+            const sQueryParams = this._buildODataQueryParams(oFilterData);
+            console.log("Built OData query params:", sQueryParams);
 
-            // Apply filters to table binding
-            const oBinding = oTable.getBinding("rows");
-            if (oBinding) {
-                oBinding.filter(aFilters);
-                console.log("Filters applied to table");
-            } else {
-                console.warn("Table binding not found");
-            }
+            // Load data with filters from API
+            this._loadDocumentData(sQueryParams);
         },
 
-        // Build filters based on FilterModel values
-        _buildFilters: function(oFilterModel) {
+        // Build OData query parameters from FilterModel values
+        _buildODataQueryParams: function(oFilterData) {
             const aFilters = [];
-            const oFilterData = oFilterModel.getData();
 
             // BUKRS (Company) - MultiInput array
             if (oFilterData.BUKRS && oFilterData.BUKRS.length > 0) {
-                const aBukrsFilters = oFilterData.BUKRS.map(sValue => 
-                    new Filter("BUKRS", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aBukrsFilters,
-                    and: false
-                }));
+                const sBukrsFilter = oFilterData.BUKRS.map(sValue => `BUKRS eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sBukrsFilter})`);
             }
 
             // BELNR (Document Number) - MultiInput array
             if (oFilterData.BELNR && oFilterData.BELNR.length > 0) {
-                const aBelnrFilters = oFilterData.BELNR.map(sValue => 
-                    new Filter("BELNR", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aBelnrFilters,
-                    and: false
-                }));
+                const sBelnrFilter = oFilterData.BELNR.map(sValue => `BELNR eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sBelnrFilter})`);
             }
 
-            // GJAHR (Year) - Individual year filters (OR logic)
-            if (oFilterData.YearFrom && oFilterData.YearTo) {
-                const iYearFrom = parseInt(oFilterData.YearFrom);
-                const iYearTo = parseInt(oFilterData.YearTo);
-                
-                if (iYearFrom && iYearTo) {
-                    // Create individual filters for each year in the range
-                    const aYearFilters = [];
-                    for (let i = iYearFrom; i <= iYearTo; i++) {
-                        // GJAHR is stored as strings in the data
-                        aYearFilters.push(new Filter("GJAHR", FilterOperator.EQ, i.toString()));
-                    }
-                    
-                    if (aYearFilters.length > 0) {
-                        console.log(`Creating year filters for range ${iYearFrom}-${iYearTo}:`, aYearFilters.map(f => f.oValue1));
-                        aFilters.push(new Filter({
-                            filters: aYearFilters,
-                            and: false  // OR logic - any year in the range
-                        }));
-                    }
-                }
+            // GJAHR (Year) - Single year from DatePicker
+            if (oFilterData.GJAHR) {
+                aFilters.push(`GJAHR eq '${oFilterData.GJAHR}'`);
             }
 
             // BLDAT (Document Date) - Date range
             if (oFilterData.BLDATFrom && oFilterData.BLDATTo) {
-                console.log("BLDAT filter data:", {
-                    BLDATFrom: oFilterData.BLDATFrom,
-                    BLDATTo: oFilterData.BLDATTo
-                });
-                
-                // Create individual filters for date range (GE and LE work better with string dates)
-                const aBldatFilters = [
-                    new Filter("BLDAT", FilterOperator.GE, oFilterData.BLDATFrom),
-                    new Filter("BLDAT", FilterOperator.LE, oFilterData.BLDATTo)
-                ];
-                aFilters.push(new Filter({
-                    filters: aBldatFilters,
-                    and: true  // AND logic - date must be >= from AND <= to
-                }));
-                
-                console.log("Created BLDAT range filters:", aBldatFilters.map(f => `${f.sPath} ${f.sOperator} ${f.oValue1}`));
+                aFilters.push(`BLDAT ge ${oFilterData.BLDATFrom} and BLDAT le ${oFilterData.BLDATTo}`);
             }
 
             // BLART (Document Type) - Multi selection
             if (oFilterData.BLART && oFilterData.BLART.length > 0) {
-                const aBlartFilters = oFilterData.BLART.map(sValue => 
-                    new Filter("BLART", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aBlartFilters,
-                    and: false
-                }));
+                const sBlartFilter = oFilterData.BLART.map(sValue => `BLART eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sBlartFilter})`);
             }
 
             // AWSYS (Origin System) - Multi selection
             if (oFilterData.AWSYS && oFilterData.AWSYS.length > 0) {
-                const aAwsysFilters = oFilterData.AWSYS.map(sValue => 
-                    new Filter("AWSYS", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aAwsysFilters,
-                    and: false
-                }));
+                const sAwsysFilter = oFilterData.AWSYS.map(sValue => `AWSYS eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sAwsysFilter})`);
             }
 
             // STATUS (Document Status) - Multi selection
             if (oFilterData.STATUS && oFilterData.STATUS.length > 0) {
-                const aStatusFilters = oFilterData.STATUS.map(sValue => 
-                    new Filter("STATUS", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aStatusFilters,
-                    and: false
-                }));
+                const sStatusFilter = oFilterData.STATUS.map(sValue => `STATUS eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sStatusFilter})`);
             }
 
             // KUNNR (Client Code) - Multi selection
             if (oFilterData.KUNNR && oFilterData.KUNNR.length > 0) {
-                const aKunnrFilters = oFilterData.KUNNR.map(sValue => 
-                    new Filter("KUNNR", FilterOperator.EQ, sValue)
-                );
-                aFilters.push(new Filter({
-                    filters: aKunnrFilters,
-                    and: false
-                }));
+                const sKunnrFilter = oFilterData.KUNNR.map(sValue => `KUNNR eq '${sValue}'`).join(' or ');
+                aFilters.push(`(${sKunnrFilter})`);
             }
 
-            return aFilters;
+            // Combine all filters with AND logic
+            if (aFilters.length > 0) {
+                return `$filter=${aFilters.join(' and ')}`;
+            }
+
+            return '';
         },
 
         // Helper method to clear all filters
@@ -232,7 +170,10 @@ sap.ui.define([
                     BLART: [],
                     AWSYS: [],
                     STATUS: [],
-                    KUNNR: []
+                    KUNNR: [],
+                    GJAHR: "", // Added for single year DatePicker
+                    documentTypes: [], // Added for dynamic document types
+                    originSystems: [] // Added for dynamic origin systems
                 });
                 
                 // Clear any tokens from MultiInput controls
@@ -408,7 +349,7 @@ sap.ui.define([
             });
 
             // Validate ACK_CODE for all selected records
-            const aInvalidRecords = aSelectedRecords.filter(record => record.ACK_CODE !== "5");
+            const aInvalidRecords = aSelectedRecords.filter(record => record.STATUS !== "05-BTP_ERR");
             if (aInvalidRecords.length > 0) {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
@@ -476,21 +417,26 @@ sap.ui.define([
 
         _handleResend: async function(oRowData) {
             try {
-                // Update status to 07-RESEND
+                // Prepare update data with new status
+                const oUpdateData = {
+                    STATUS: "07-RESEND"
+                };
+                
+                // Make PATCH call to EINV_DOCUMENT_LIST entity
+                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oRowData.ID})`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(oUpdateData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Update status locally after successful API call
                 this._updateDocumentStatus(oRowData, "07-RESEND");
-                
-                // TODO: replace with real API call
-                // Example: await fetch(`${this.baseUrl}/resend`, { 
-                //     method: "POST", 
-                //     headers: { "Content-Type": "application/json" }, 
-                //     body: JSON.stringify({ 
-                //         bukrs: oRowData.BUKRS,
-                //         belnr: oRowData.BELNR,
-                //         gjahr: oRowData.GJAHR,
-                //         status: "07-RESEND"
-                //     }) 
-                // });
-                
                 MessageToast.show(this._getText("documentStatusResend"));
             } catch (error) {
                 throw new Error("Failed to resend document: " + error.message);
@@ -499,21 +445,26 @@ sap.ui.define([
 
         _handleCancel: async function(oRowData) {
             try {
-                // Update status to 04-CANC
+                // Prepare update data with new status
+                const oUpdateData = {
+                    STATUS: "04-CANC"
+                };
+                
+                // Make PATCH call to EINV_DOCUMENT_LIST entity
+                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oRowData.ID})`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(oUpdateData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Update status locally after successful API call
                 this._updateDocumentStatus(oRowData, "04-CANC");
-                
-                // TODO: replace with real API call
-                // Example: await fetch(`${this.baseUrl}/cancel`, { 
-                //     method: "POST", 
-                //     headers: { "Content-Type": "application/json" }, 
-                //     body: JSON.stringify({ 
-                //         bukrs: oRowData.BUKRS,
-                //         belnr: oRowData.BELNR,
-                //         gjahr: oRowData.GJAHR,
-                //         status: "04-CANC"
-                //     }) 
-                // });
-                
                 MessageToast.show(this._getText("documentStatusCancel"));
             } catch (error) {
                 throw new Error("Failed to cancel document: " + error.message);
@@ -647,7 +598,7 @@ sap.ui.define([
             }
         },
 
-        onAckUserSave: function() {
+        onAckUserSave: async function() {
             const oAckUserModel = this.getView().getModel("ackUserModel");
             const oCurrentDocument = oAckUserModel.getProperty("/currentDocument");
             const sSelectedAckCode = oAckUserModel.getProperty("/selectedAckCode");
@@ -658,65 +609,65 @@ sap.ui.define([
                 return;
             }
 
-            // Save ACK User data to EINV_DOCUMENT_HISTORY
-            this._saveAckUserToHistory(oCurrentDocument, sSelectedAckCode, sAckUserText);
+            try {
+                // Save ACK User data to EINV_DOCUMENT_LIST via POST
+                await this._saveAckUserToHistory(oCurrentDocument, sSelectedAckCode, sAckUserText);
 
-            // Close dialog
-            this.onAckUserCancel();
+                // Close dialog
+                this.onAckUserCancel();
 
-            MessageToast.show(this._getText("ackUserAssignedSuccess"));
+                MessageToast.show(this._getText("ackUserAssignedSuccess"));
+            } catch (error) {
+                MessageBox.error("Failed to assign ACK user: " + error.message);
+            }
         },
 
-        _saveAckUserToHistory: function(oDocument, sAckCode, sAckUserText) {
-            const oHistoryEntry = {
-                MANDT: "100", // TODO: Get actual client
-                BUKRS: oDocument.BUKRS,
-                BELNR: oDocument.BELNR,
-                GJAHR: oDocument.GJAHR,
-                RECORD_TYPE: "02", // 02 - Ack
-                STATUS: oDocument.STATUS,
-                ACK_CODE: sAckCode,
-                TIMESTAMP: new Date().getTime().toString(),
-                USER: "CURRENT_USER", // TODO: Get actual user
-                FILE_NAME: "", // TBD
-                FILE_NAME_ACK: "", // TBD
-                ACK_DATE: new Date().toISOString().split('T')[0],
-                ACK_TIME: new Date().toTimeString().split(' ')[0],
-                FILE_CONTENT_ID: "", // TBD
-                ERROR_STEP: "", // TBD
-                ERROR_MESSAGE: sAckUserText || ""
-            };
-
-            // Update the main document's ACK_USER_DESCR and ACK_USER fields
-            const oAppModel = this.getView().getModel("app");
-            const aDocuments = oAppModel.getProperty("/rows");
-            const oDocumentToUpdate = aDocuments.find(doc => 
-                doc.BUKRS === oDocument.BUKRS && 
-                doc.BELNR === oDocument.BELNR && 
-                doc.GJAHR === oDocument.GJAHR
-            );
-            
-            if (oDocumentToUpdate) {
-                oDocumentToUpdate.ACK_CODE = sAckCode;
-                oDocumentToUpdate.ACK_USER_DESCR = sAckUserText || "";
-                oDocumentToUpdate.ACK_USER = sAckCode; // TODO: Get actual user
-                oDocumentToUpdate.ACK_DATE = new Date().toISOString().split('T')[0];
-                oDocumentToUpdate.ACK_TIME = new Date().toTimeString().split(' ')[0];
+        _saveAckUserToHistory: async function(oDocument, sAckCode, sAckUserText) {
+            try {
+                // Prepare update data with ACK user fields
+                const oUpdateData = {
+                    ACK_CODE: sAckCode,
+                    ACK_USER: sAckCode,
+                    ACK_USER_DESCR: sAckUserText || "",
+                    ACK_DATE: new Date().toISOString().split('T')[0],
+                    ACK_TIME: new Date().toTimeString().split(' ')[0]
+                };
                 
-                // Refresh the model to update the UI
-                oAppModel.refresh();
+                // Make PATCH call to EINV_DOCUMENT_LIST entity to update ACK user fields
+                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oDocument.ID})`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(oUpdateData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Update the main document's ACK_USER_DESCR and ACK_USER fields locally
+                const oAppModel = this.getView().getModel("app");
+                const aDocuments = oAppModel.getProperty("/rows");
+                const oDocumentToUpdate = aDocuments.find(doc => 
+                    doc.BUKRS === oDocument.BUKRS && 
+                    doc.BELNR === oDocument.BELNR && 
+                    doc.GJAHR === oDocument.GJAHR
+                );
+                
+                if (oDocumentToUpdate) {
+                    oDocumentToUpdate.ACK_CODE = sAckCode;
+                    oDocumentToUpdate.ACK_USER_DESCR = sAckUserText || "";
+                    oDocumentToUpdate.ACK_USER = sAckCode;
+                    oDocumentToUpdate.ACK_DATE = new Date().toISOString().split('T')[0];
+                    oDocumentToUpdate.ACK_TIME = new Date().toTimeString().split(' ')[0];
+                    
+                    // Refresh the model to update the UI
+                    oAppModel.refresh();
+                }
+            } catch (error) {
+                MessageToast.show("Failed to assign ACK user: " + error.message);
             }
-
-            // TODO: Replace with real API call to save to EINV_DOCUMENT_HISTORY table
-            // Example: await fetch(`${this.baseUrl}/ackUser`, {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify(oHistoryEntry)
-            // });
-
-            console.log("ACK User history entry:", oHistoryEntry);
-            console.log("Updated main document ACK_USER_DESCR:", sAckUserText);
-            console.log("Updated main document ACK_USER: CURRENT_USER");
         },
 
         // History functionality
@@ -899,13 +850,22 @@ sap.ui.define([
             }
         },
         
-        // Load document data from OData service into app model
-        _loadDocumentData: function() {
-            const oAppModel = this.getView().getModel("app");
-            if (!oAppModel) {
-                return;
-            }
-            fetch(ServiceConfig.getServiceUrl("documentList"))
+        // Load dynamic filter data from entities
+        _loadFilterData: function() {
+            const aPromises = [
+                this._loadDocumentTypes(),
+                this._loadOriginSystems()
+            ];
+            
+            return Promise.all(aPromises).catch(error => {
+                console.error("Error loading filter data:", error);
+                MessageToast.show("Failed to load filter options");
+            });
+        },
+
+        // Load Document Type options from EINV_INVOICE_CODE entity
+        _loadDocumentTypes: function() {
+            return fetch(ServiceConfig.getServiceUrl("invoiceCode"))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -914,15 +874,91 @@ sap.ui.define([
                 })
                 .then(data => {
                     if (data && data.value) {
-                        oAppModel.setProperty("/rows", data.value);
-                        MessageToast.show(`Loaded ${data.value.length} documents`);
-                    } else {
-                        oAppModel.setProperty("/rows", []);
-                        MessageToast.show("No documents found");
+                        const aDocumentTypes = data.value.map(item => ({
+                            key: item.INVOICE_CODE || item.BLART,
+                            text: item.INVOICE_DESCR || item.BLART_DESCR || item.INVOICE_CODE || item.BLART
+                        }));
+                        
+                        // Store in a dedicated model or extend existing model
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        if (oFilterModel) {
+                            oFilterModel.setProperty("/documentTypes", aDocumentTypes);
+                        }
+                        
+                        console.log("Loaded document types:", aDocumentTypes);
                     }
                 })
                 .catch(error => {
-                    MessageToast.show("Failed to load documents");
+                    console.error("Error loading document types:", error);
+                });
+        },
+
+        // Load Origin System options from EINV_SOURCE_SYSTEM entity
+        _loadOriginSystems: function() {
+            return fetch(ServiceConfig.getServiceUrl("sourceSystem"))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        const aOriginSystems = data.value.map(item => ({
+                            key: item.AWSYS || item.SOURCE_SYSTEM,
+                            text: item.AWSYS_DESCR || item.SOURCE_SYSTEM_DESCR || item.AWSYS || item.SOURCE_SYSTEM
+                        }));
+                        
+                        // Store in a dedicated model or extend existing model
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        if (oFilterModel) {
+                            oFilterModel.setProperty("/originSystems", aOriginSystems);
+                        }
+                        
+                        console.log("Loaded origin systems:", aOriginSystems);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading origin systems:", error);
+                });
+        },
+
+        // Load document data from OData service into app model with optional filters
+        _loadDocumentData: function(sQueryParams = '') {
+            const oAppModel = this.getView().getModel("app");
+            if (!oAppModel) {
+                return;
+            }
+
+            // Build the complete URL with optional query parameters
+            let sUrl = ServiceConfig.getServiceUrl("documentList");
+            if (sQueryParams) {
+                sUrl += (sUrl.includes('?') ? '&' : '?') + sQueryParams;
+            }
+
+            console.log("Loading documents from URL:", sUrl);
+
+            fetch(sUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        // data.value[0].STATUS = '05-BTP_ERR';
+                        oAppModel.setProperty("/rows", data.value);
+                        const iCount = data.value.length;
+                        MessageToast.show(sQueryParams ? `Loaded ${iCount} filtered documents` : `Loaded ${iCount} documents`);
+                    } else {
+                        oAppModel.setProperty("/rows", []);
+                        MessageToast.show(sQueryParams ? "No documents match the filters" : "No documents found");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading documents:", error);
+                    MessageToast.show("Failed to load documents: " + error.message);
                     oAppModel.setProperty("/rows", []);
                 });
         }
