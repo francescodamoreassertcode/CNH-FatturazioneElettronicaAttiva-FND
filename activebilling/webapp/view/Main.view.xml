@@ -38,16 +38,35 @@
                     search=".onSearch" filterChange=".onFilterChange" clear=".onClear" showClearOnFB="true" afterVariantLoad=".onAfterVariantLoad">
                     <fb:filterGroupItems>
 
-                        <!-- BUKRS (Company, free text, multi input) -->
+                        <!-- BUKRS (Company, multi input with suggestion table) -->
                      <fb:FilterGroupItem name="BUKRS" label="{i18n>bukrs}" groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
                             <MultiInput id="multiInput1"
                                         customData:prop="BUKRS"
-                                        showSuggestion="false"
+                                        showSuggestion="true"
                                         width="70%"
                                         showValueHelp="false"
+                                        suggestionRows="{filterModel>/companySuggestions}"
                                         tokenUpdate=".onMultiInputTokenUpdate"
-                                        change=".onMultiInputChange" />
+                                        change=".onMultiInputChange"
+                                        suggestionItemSelected=".onCompanySuggestionSelected">
+                                <suggestionColumns>
+                                    <Column hAlign="Begin" popinDisplay="Inline" demandPopin="true">
+                                        <Label text="Company Code"/>
+                                    </Column>
+                                    <Column hAlign="Begin" popinDisplay="Inline" demandPopin="true">
+                                        <Label text="Country"/>
+                                    </Column>
+                                </suggestionColumns>
+                                <suggestionRows>
+                                    <ColumnListItem>
+                                        <cells>
+                                            <Label text="{filterModel>BUKRS}"/>
+                                            <Label text="{filterModel>FLOW_DESCRIPTION}"/>
+                                        </cells>
+                                    </ColumnListItem>
+                                </suggestionRows>
+                            </MultiInput>
                         </fb:control>
                     </fb:FilterGroupItem>
 
@@ -92,7 +111,7 @@
                         <fb:FilterGroupItem name="BLART" label="{i18n>blart}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox selectedKeys="{filterModel>/BLART}" change=".onMultiComboBoxChange" items="{filterModel>/documentTypes}">
-                                    <core:Item key="{key}" text="{text}"/>
+                                    <core:Item key="{filterModel>key}" text="{filterModel>text}"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -101,7 +120,7 @@
                         <fb:FilterGroupItem name="AWSYS" label="{i18n>awsys}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox selectedKeys="{filterModel>/AWSYS}" change=".onMultiComboBoxChange" items="{filterModel>/originSystems}">
-                                    <core:Item key="{key}" text="{text}"/>
+                                    <core:Item key="{filterModel>key}" text="{filterModel>text}"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -126,7 +145,8 @@
                         <!-- KUNNR (Client Code, multi selection) -->
 							<fb:FilterGroupItem name="KUNNR" label="{i18n>kunnr}" groupName="Group1" visibleInFilterBar="true">
 								<fb:control>
-									<MultiInput customData:prop="KUNNR"
+									<MultiInput id="multiInput3" 
+												customData:prop="KUNNR"
 												showSuggestion="false"
 												width="70%"
 												showValueHelp="false"
@@ -213,7 +233,7 @@
 									type="Transparent" 
 									icon="sap-icon://account"
 									press=".onAckUserPressed"
-									enabled="{= (${app>STATUS} === '05-BTP_ERR' || ${app>ACK_USER} !== '') &amp;&amp; (${app>STATUS} === '01-NEW' || ${app>STATUS} === '02-WAIT' || ${app>STATUS} === '03-SENT' || ${app>STATUS} === '05-BTP_ERR' || ${app>STATUS} === '06-DT_ERR' || ${app>STATUS} === '09-COMM_ERR')}"
+									enabled="{= (${app>STATUS} === '05' || ${app>ACK_USER} !== '') &amp;&amp; (${app>STATUS} === '01' || ${app>STATUS} === '02' || ${app>STATUS} === '03' || ${app>STATUS} === '05' || ${app>STATUS} === '06' || ${app>STATUS} === '09')}"
 									tooltip="{i18n>mainAckUserTooltip}"/>
 							</HBox>
 						</table:template>

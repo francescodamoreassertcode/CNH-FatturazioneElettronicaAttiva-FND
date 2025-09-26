@@ -199,6 +199,12 @@ sap.ui.define([
             if (oBELNRInput) {
                 oBELNRInput.removeAllTokens();
             }
+
+            // Clear KUNNR MultiInput
+            const oKUNNRInput = this.byId("multiInput3");
+            if (oKUNNRInput) {
+                oKUNNRInput.removeAllTokens();
+            }
         },
 
         // Event handlers for other filter controls
@@ -275,6 +281,21 @@ sap.ui.define([
             // No automatic filtering - only when search button is clicked
         },
 
+        onCompanySuggestionSelected: function(oEvent) {
+            const oSelectedItem = oEvent.getParameter("selectedItem");
+            const sSelectedKey = oSelectedItem.getKey();
+            
+            // Add the selected company to the filter model
+            const oFilterModel = this.getView().getModel("filterModel");
+            if (oFilterModel) {
+                const aCurrentBUKRS = oFilterModel.getProperty("/BUKRS") || [];
+                if (!aCurrentBUKRS.includes(sSelectedKey)) {
+                    aCurrentBUKRS.push(sSelectedKey);
+                    oFilterModel.setProperty("/BUKRS", aCurrentBUKRS);
+                }
+            }
+        },
+
         onMultiInputTokenUpdate: function (oEvent) {
             const oMI = oEvent.getSource(),
                 sProp = oMI.data('prop'),
@@ -349,7 +370,7 @@ sap.ui.define([
             });
 
             // Validate ACK_CODE for all selected records
-            const aInvalidRecords = aSelectedRecords.filter(record => record.STATUS !== "05-BTP_ERR");
+            const aInvalidRecords = aSelectedRecords.filter(record => record.STATUS !== "05");
             if (aInvalidRecords.length > 0) {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
@@ -419,7 +440,7 @@ sap.ui.define([
             try {
                 // Prepare update data with new status
                 const oUpdateData = {
-                    STATUS: "07-RESEND"
+                    STATUS: "07"
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity
@@ -436,8 +457,10 @@ sap.ui.define([
                 }
 
                 // Update status locally after successful API call
-                this._updateDocumentStatus(oRowData, "07-RESEND");
-                MessageToast.show(this._getText("documentStatusResend"));
+                this._updateDocumentStatus(oRowData, "07");
+                
+                // Refresh the table to show updated formatting
+                this._refreshTable();
             } catch (error) {
                 throw new Error("Failed to resend document: " + error.message);
             }
@@ -447,7 +470,7 @@ sap.ui.define([
             try {
                 // Prepare update data with new status
                 const oUpdateData = {
-                    STATUS: "04-CANC"
+                    STATUS: "04"
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity
@@ -464,8 +487,10 @@ sap.ui.define([
                 }
 
                 // Update status locally after successful API call
-                this._updateDocumentStatus(oRowData, "04-CANC");
-                MessageToast.show(this._getText("documentStatusCancel"));
+                this._updateDocumentStatus(oRowData, "04");
+                
+                // Refresh the table to show updated formatting
+                this._refreshTable();
             } catch (error) {
                 throw new Error("Failed to cancel document: " + error.message);
             }
@@ -487,7 +512,17 @@ sap.ui.define([
                 aRows[iIndex].UPDATE_DATE = new Date().toISOString().split('T')[0];
                 aRows[iIndex].USER_UPDATE = "CURRENT_USER"; // TODO: Get actual user
                 
+                // Update the model and refresh to trigger re-rendering
                 oAppModel.setProperty("/rows", aRows);
+                oAppModel.refresh();
+            }
+        },
+
+        _refreshTable: function() {
+            // Force table to re-render by refreshing the binding
+            const oTable = this.byId("tableDocuments");
+            if (oTable) {
+                oTable.getBinding("rows").refresh();
             }
         },
 
@@ -559,13 +594,13 @@ sap.ui.define([
             const oClonedData = JSON.parse(JSON.stringify(oContextData));
 
             // Validate ACK_CODE
-            if (oClonedData.ACK_CODE !== "ACK0_KO") {
+            if (oClonedData.STATUS !== "05") {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
             }
 
             // Validate STATUS
-            const aAllowedStatuses = ["01-NEW", "02-WAIT", "03-SENT", "05-BTP_ERR", "06-DT_ERR", "09-COMM_ERR"];
+            const aAllowedStatuses = ["01", "02", "03", "05", "06", "09"];
             if (!aAllowedStatuses.includes(oClonedData.STATUS)) {
                 MessageBox.error(this._getText("ackUserStatusError", [oClonedData.STATUS]));
                 return;
@@ -854,7 +889,8 @@ sap.ui.define([
         _loadFilterData: function() {
             const aPromises = [
                 this._loadDocumentTypes(),
-                this._loadOriginSystems()
+                this._loadOriginSystems(),
+                this._loadCompanyData()
             ];
             
             return Promise.all(aPromises).catch(error => {
@@ -874,18 +910,32 @@ sap.ui.define([
                 })
                 .then(data => {
                     if (data && data.value) {
-                        const aDocumentTypes = data.value.map(item => ({
-                            key: item.INVOICE_CODE || item.BLART,
-                            text: item.INVOICE_DESCR || item.BLART_DESCR || item.INVOICE_CODE || item.BLART
-                        }));
+                        // Create a Set to store unique combinations of DOCUMENT_TYPE and DOCUMENT_TYPE_TEXT
+                        const uniqueCombinations = new Set();
+                        const aDocumentTypes = [];
                         
-                        // Store in a dedicated model or extend existing model
+                        data.value.forEach(item => {
+                            if (item.DOCUMENT_TYPE && item.DOCUMENT_TYPE_TEXT) {
+                                const combination = `${item.DOCUMENT_TYPE}|${item.DOCUMENT_TYPE_TEXT}`;
+                                
+                                // Only add if this combination hasn't been seen before
+                                if (!uniqueCombinations.has(combination)) {
+                                    uniqueCombinations.add(combination);
+                                    aDocumentTypes.push({
+                                        key: item.DOCUMENT_TYPE,
+                                        text: `${item.DOCUMENT_TYPE} - ${item.DOCUMENT_TYPE_TEXT}`
+                                    });
+                                }
+                            }
+                        });
+                        
+                        // Store in filter model
                         const oFilterModel = this.getView().getModel("filterModel");
                         if (oFilterModel) {
                             oFilterModel.setProperty("/documentTypes", aDocumentTypes);
                         }
                         
-                        console.log("Loaded document types:", aDocumentTypes);
+                        console.log("Loaded unique document types:", aDocumentTypes);
                     }
                 })
                 .catch(error => {
@@ -904,22 +954,74 @@ sap.ui.define([
                 })
                 .then(data => {
                     if (data && data.value) {
-                        const aOriginSystems = data.value.map(item => ({
-                            key: item.AWSYS || item.SOURCE_SYSTEM,
-                            text: item.AWSYS_DESCR || item.SOURCE_SYSTEM_DESCR || item.AWSYS || item.SOURCE_SYSTEM
+                        // Extract unique AWSYS values from the array
+                        const aUniqueAwsys = [...new Set(data.value.map(item => item.AWSYS).filter(awsys => awsys))];
+                        
+                        // Create filter options with unique AWSYS values
+                        const aOriginSystems = aUniqueAwsys.map(awsys => ({
+                            key: awsys,
+                            text: awsys
                         }));
                         
-                        // Store in a dedicated model or extend existing model
+                        // Store in filter model
                         const oFilterModel = this.getView().getModel("filterModel");
                         if (oFilterModel) {
                             oFilterModel.setProperty("/originSystems", aOriginSystems);
                         }
                         
-                        console.log("Loaded origin systems:", aOriginSystems);
+                        console.log("Loaded unique origin systems:", aOriginSystems);
                     }
                 })
                 .catch(error => {
                     console.error("Error loading origin systems:", error);
+                });
+        },
+
+        // Load Company data from EINV_COMPANY_MASTER_DATA entity
+        _loadCompanyData: function() {
+            return fetch(ServiceConfig.getServiceUrl("companyMaster"))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        // Create a Map to store unique companies by BUKRS code
+                        const uniqueCompanies = new Map();
+                        
+                        data.value.forEach(item => {
+                            const sBukrs = item.BUKRS;
+                            
+                            if (sBukrs && !uniqueCompanies.has(sBukrs)) {
+                                // Keep all original data and add UI-specific properties
+                                uniqueCompanies.set(sBukrs, {
+                                    // UI-specific properties for MultiInput
+                                    key: sBukrs,                    // Company Code (BUKRS)
+                                    text: sBukrs,                  // Company Code (for display)
+                                    additionalText: item.FLOW_DESCRIPTION || "", // Flow Description (e.g., "Belgium")
+                                    
+                                    // Keep all original data fields
+                                    ...item
+                                });
+                            }
+                        });
+                        
+                        // Convert Map values to array
+                        const aCompanySuggestions = Array.from(uniqueCompanies.values());
+                        
+                        // Store in filter model
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        if (oFilterModel) {
+                            oFilterModel.setProperty("/companySuggestions", aCompanySuggestions);
+                        }
+                        
+                        console.log("Loaded unique company suggestions with table data:", aCompanySuggestions);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading company data:", error);
                 });
         },
 
@@ -947,7 +1049,7 @@ sap.ui.define([
                 })
                 .then(data => {
                     if (data && data.value) {
-                        // data.value[0].STATUS = '05-BTP_ERR';
+                        //data.value[0].STATUS = '05-BTP_ERR';
                         oAppModel.setProperty("/rows", data.value);
                         const iCount = data.value.length;
                         MessageToast.show(sQueryParams ? `Loaded ${iCount} filtered documents` : `Loaded ${iCount} documents`);
