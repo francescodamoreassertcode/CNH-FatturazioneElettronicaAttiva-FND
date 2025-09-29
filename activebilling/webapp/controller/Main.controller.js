@@ -281,19 +281,173 @@ sap.ui.define([
             // No automatic filtering - only when search button is clicked
         },
 
-        onCompanySuggestionSelected: function(oEvent) {
-            const oSelectedItem = oEvent.getParameter("selectedItem");
-            const sSelectedKey = oSelectedItem.getKey();
+        // Company ValueHelp Dialog methods
+        onCompanyValueHelpRequest: function(oEvent) {
+            const oMultiInput = oEvent.getSource();
+            let oDialog = this.byId("companyValueHelpDialog");
             
-            // Add the selected company to the filter model
-            const oFilterModel = this.getView().getModel("filterModel");
-            if (oFilterModel) {
-                const aCurrentBUKRS = oFilterModel.getProperty("/BUKRS") || [];
-                if (!aCurrentBUKRS.includes(sSelectedKey)) {
-                    aCurrentBUKRS.push(sSelectedKey);
-                    oFilterModel.setProperty("/BUKRS", aCurrentBUKRS);
-                }
+            // Store reference to the MultiInput for later use
+            this._oCompanyMultiInput = oMultiInput;
+            
+            // Create dialog if it doesn't exist
+            if (!oDialog) {
+                this._createCompanyValueHelpDialog().then(function(oDialog) {
+                    this._preSelectCompanies();
+                    oDialog.open();
+                }.bind(this));
+            } else {
+                // Pre-select currently selected companies
+                this._preSelectCompanies();
+                oDialog.open();
             }
+        },
+
+        _createCompanyValueHelpDialog: function() {
+            const that = this;
+            
+            // Load the fragment
+            return sap.ui.core.Fragment.load({
+                id: this.getView().getId(),
+                name: "cnh.ab.activebilling.view.dialogs.CompanyValueHelpDialog",
+                controller: this
+            }).then(function(oDialog) {
+                that.getView().addDependent(oDialog);
+                
+                // Initialize filtered suggestions with all companies
+                that._initializeFilteredCompanies();
+                
+                return oDialog;
+            });
+        },
+
+        _initializeFilteredCompanies: function() {
+            const oFilterModel = this.getView().getModel("filterModel");
+            const aAllCompanies = oFilterModel.getProperty("/companySuggestions") || [];
+            oFilterModel.setProperty("/filteredCompanySuggestions", aAllCompanies);
+        },
+
+        _preSelectCompanies: function() {
+            const oTable = this.byId("companyValueHelpTable");
+            const oFilterModel = this.getView().getModel("filterModel");
+            const aCurrentBUKRS = oFilterModel.getProperty("/BUKRS") || [];
+            
+            if (oTable && aCurrentBUKRS.length > 0) {
+                // Clear current selection
+                oTable.removeSelections();
+                
+                // Pre-select companies that are already selected
+                const aItems = oTable.getItems();
+                aItems.forEach((oItem, iIndex) => {
+                    const oContext = oItem.getBindingContext("filterModel");
+                    if (oContext) {
+                        const oData = oContext.getObject();
+                        if (aCurrentBUKRS.includes(oData.BUKRS)) {
+                            oTable.setSelectedIndex(iIndex);
+                        }
+                    }
+                });
+            }
+        },
+
+        onCompanyTableSelectionChange: function(oEvent) {
+            // This method can be used for real-time feedback if needed
+            // For now, we'll handle selection in the OK button
+        },
+
+        onCompanyValueHelpOK: function() {
+            const oTable = this.byId("companyValueHelpTable");
+            const aSelectedIndices = oTable.getSelectedIndices();
+            const oFilterModel = this.getView().getModel("filterModel");
+            
+            if (aSelectedIndices.length === 0) {
+                MessageToast.show("Please select at least one company");
+                return;
+            }
+            
+            // Get selected company codes
+            const aSelectedBUKRS = [];
+            aSelectedIndices.forEach(iIndex => {
+                const oItem = oTable.getItems()[iIndex];
+                const oContext = oItem.getBindingContext("filterModel");
+                if (oContext) {
+                    const oData = oContext.getObject();
+                    aSelectedBUKRS.push(oData.BUKRS);
+                }
+            });
+            
+            // Update filter model
+            oFilterModel.setProperty("/BUKRS", aSelectedBUKRS);
+            
+            // Update MultiInput tokens
+            this._updateMultiInputTokens(aSelectedBUKRS);
+            
+            // Close dialog
+            this.byId("companyValueHelpDialog").close();
+            
+            MessageToast.show(`${aSelectedBUKRS.length} companies selected`);
+        },
+
+        onCompanyValueHelpCancel: function() {
+            this.byId("companyValueHelpDialog").close();
+        },
+
+        _updateMultiInputTokens: function(aSelectedBUKRS) {
+            const oMultiInput = this._oCompanyMultiInput;
+            if (!oMultiInput) return;
+            
+            // Clear existing tokens
+            oMultiInput.removeAllTokens();
+            
+            // Add new tokens
+            aSelectedBUKRS.forEach(sBUKRS => {
+                const oToken = new sap.m.Token({
+                    text: sBUKRS,
+                    key: sBUKRS
+                });
+                oMultiInput.addToken(oToken);
+            });
+        },
+
+        // Search functionality for company ValueHelp dialog
+        onCompanySearch: function(oEvent) {
+            const sQuery = oEvent.getParameters().newValue;
+            this._filterCompanies(sQuery);
+        },
+
+        onCompanySearchLiveChange: function(oEvent) {
+            const sQuery = oEvent.getParameters().newValue;
+            this._filterCompanies(sQuery);
+        },
+
+        _filterCompanies: function(sSearchQuery) {
+            const oFilterModel = this.getView().getModel("filterModel");
+            const aAllCompanies = oFilterModel.getProperty("/companySuggestions") || [];
+            
+            if (!sSearchQuery || sSearchQuery.trim() === "") {
+                // Show all companies if search is empty
+                oFilterModel.setProperty("/filteredCompanySuggestions", aAllCompanies);
+                return;
+            }
+            
+            const sQuery = sSearchQuery.toLowerCase().trim();
+            
+            // Filter companies based on search query
+            const aFilteredCompanies = aAllCompanies.filter(function(oCompany) {
+                // Search in multiple fields
+                const sBUKRS = (oCompany.BUKRS || "").toLowerCase();
+                const sFlowDescription = (oCompany.FLOW_DESCRIPTION || "").toLowerCase();
+                const sCountryClient = (oCompany.COUNTRY_CLIENT || "").toLowerCase();
+                const sVatProvider = (oCompany.VAT_PROVIDER || "").toLowerCase();
+                const sFlow = (oCompany.FLOW || "").toLowerCase();
+                
+                return sBUKRS.includes(sQuery) ||
+                       sFlowDescription.includes(sQuery) ||
+                       sCountryClient.includes(sQuery) ||
+                       sVatProvider.includes(sQuery) ||
+                       sFlow.includes(sQuery);
+            });
+            
+            oFilterModel.setProperty("/filteredCompanySuggestions", aFilteredCompanies);
         },
 
         onMultiInputTokenUpdate: function (oEvent) {
@@ -594,7 +748,7 @@ sap.ui.define([
             const oClonedData = JSON.parse(JSON.stringify(oContextData));
 
             // Validate ACK_CODE
-            if (oClonedData.STATUS !== "05") {
+            if (oClonedData.ACK_CODE !== "ACK0_KO") {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
             }
@@ -1016,8 +1170,6 @@ sap.ui.define([
                         if (oFilterModel) {
                             oFilterModel.setProperty("/companySuggestions", aCompanySuggestions);
                         }
-                        
-                        console.log("Loaded unique company suggestions with table data:", aCompanySuggestions);
                     }
                 })
                 .catch(error => {

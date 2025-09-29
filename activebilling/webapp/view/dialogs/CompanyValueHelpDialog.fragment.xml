@@ -1,0 +1,54 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+	<Dialog id="companyValueHelpDialog" title="{i18n>selectCompanies}" contentWidth="800px" contentHeight="600px">
+		<content>
+			<!-- Search Input -->
+			<HBox class="sapUiSmallMargin">
+				<SearchField id="companySearchField"
+							placeholder="{i18n>searchCompanies}"
+							search=".onCompanySearch"
+							liveChange=".onCompanySearchLiveChange"
+							width="100%"/>
+			</HBox>
+			
+			<Table id="companyValueHelpTable" 
+				   growing="true" 
+				   growingThreshold="50"
+				   mode="MultiSelect"
+				   selectionChange=".onCompanyTableSelectionChange"
+				   items="{filterModel>/filteredCompanySuggestions}">
+				<columns>
+					<Column width="15%">
+						<Label text="{i18n>companyCode}"/>
+					</Column>
+					<Column width="25%">
+						<Label text="{i18n>flowDescription}"/>
+					</Column>
+					<Column width="15%">
+						<Label text="{i18n>countryClient}"/>
+					</Column>
+					<Column width="20%">
+						<Label text="{i18n>vatProvider}"/>
+					</Column>
+					<Column width="15%">
+						<Label text="{i18n>flow}"/>
+					</Column>
+				</columns>
+				<items>
+					<ColumnListItem>
+						<cells>
+							<Label text="{filterModel>BUKRS}"/>
+							<Label text="{filterModel>FLOW_DESCRIPTION}"/>
+							<Label text="{filterModel>COUNTRY_CLIENT}"/>
+							<Label text="{filterModel>VAT_PROVIDER}"/>
+							<Label text="{filterModel>FLOW}"/>
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</content>
+		<buttons>
+			<Button text="{i18n>ok}" press=".onCompanyValueHelpOK" type="Emphasized"/>
+			<Button text="{i18n>cancel}" press=".onCompanyValueHelpCancel"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

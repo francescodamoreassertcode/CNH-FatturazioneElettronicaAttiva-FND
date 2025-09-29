@@ -38,34 +38,17 @@
                     search=".onSearch" filterChange=".onFilterChange" clear=".onClear" showClearOnFB="true" afterVariantLoad=".onAfterVariantLoad">
                     <fb:filterGroupItems>
 
-                        <!-- BUKRS (Company, multi input with suggestion table) -->
+                        <!-- BUKRS (Company, multi input with value help dialog) -->
                      <fb:FilterGroupItem name="BUKRS" label="{i18n>bukrs}" groupName="Group1" visibleInFilterBar="true">
                         <fb:control>
                             <MultiInput id="multiInput1"
                                         customData:prop="BUKRS"
-                                        showSuggestion="true"
+                                        showSuggestion="false"
                                         width="70%"
-                                        showValueHelp="false"
-                                        suggestionRows="{filterModel>/companySuggestions}"
+                                        showValueHelp="true"
+                                        valueHelpRequest=".onCompanyValueHelpRequest"
                                         tokenUpdate=".onMultiInputTokenUpdate"
-                                        change=".onMultiInputChange"
-                                        suggestionItemSelected=".onCompanySuggestionSelected">
-                                <suggestionColumns>
-                                    <Column hAlign="Begin" popinDisplay="Inline" demandPopin="true">
-                                        <Label text="Company Code"/>
-                                    </Column>
-                                    <Column hAlign="Begin" popinDisplay="Inline" demandPopin="true">
-                                        <Label text="Country"/>
-                                    </Column>
-                                </suggestionColumns>
-                                <suggestionRows>
-                                    <ColumnListItem>
-                                        <cells>
-                                            <Label text="{filterModel>BUKRS}"/>
-                                            <Label text="{filterModel>FLOW_DESCRIPTION}"/>
-                                        </cells>
-                                    </ColumnListItem>
-                                </suggestionRows>
+                                        change=".onMultiInputChange">
                             </MultiInput>
                         </fb:control>
                     </fb:FilterGroupItem>
