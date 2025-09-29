@@ -158,31 +158,25 @@ sap.ui.define([
         clearAllFilters: function() {
             const oFilterModel = this.getView().getModel("filterModel");
             if (oFilterModel) {
-                // Reset all filter values to default
-                oFilterModel.setData({
-                    BUKRS: [],
-                    BELNR: [],
-                    YearFrom: new Date().getFullYear().toString(),
-                    YearTo: new Date().getFullYear().toString(),
-                    BLDATFrom: "",
-                    BLDATTo: "",
-                    BLDATRange: "",
-                    BLART: [],
-                    AWSYS: [],
-                    STATUS: [],
-                    KUNNR: [],
-                    GJAHR: "", // Added for single year DatePicker
-                    documentTypes: [], // Added for dynamic document types
-                    originSystems: [] // Added for dynamic origin systems
-                });
+                // Reset only the filter values to default, preserve dynamic data
+                oFilterModel.setProperty("/BUKRS", []);
+                oFilterModel.setProperty("/BELNR", []);
+                oFilterModel.setProperty("/YearFrom", new Date().getFullYear().toString());
+                oFilterModel.setProperty("/YearTo", new Date().getFullYear().toString());
+                oFilterModel.setProperty("/BLDATFrom", "");
+                oFilterModel.setProperty("/BLDATTo", "");
+                oFilterModel.setProperty("/BLDATRange", "");
+                oFilterModel.setProperty("/BLART", []);
+                oFilterModel.setProperty("/AWSYS", []);
+                oFilterModel.setProperty("/STATUS", []);
+                oFilterModel.setProperty("/KUNNR", []);
+                oFilterModel.setProperty("/GJAHR", ""); // Single year DatePicker
                 
                 // Clear any tokens from MultiInput controls
                 this._clearMultiInputTokens();
                 
                 // Apply filters (which will show all data since filters are cleared)
                 this._applyFilters();
-                
-                console.log("All filters cleared and table refreshed");
             }
         },
 
