@@ -22,7 +22,7 @@
 				<table:Table id="historyTable"
 					width="100%"
 					visibleRowCountMode="Auto"
-					minAutoRowCount="5"
+					minAutoRowCount="30"
 					selectionMode="Multi"
 					selectionChange=".onHistorySelectionChange"
 					rows="{ path: 'historyModel>/historyData' }">
@@ -46,46 +46,50 @@
 								<Text text="{= ${historyModel>RECORD_TYPE} === '01' ? ${i18n>recordTypeSend} : ${i18n>recordTypeAck}}"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="6rem" sortProperty="STATUS" filterProperty="STATUS">
+						<table:Column width="9rem" sortProperty="STATUS" filterProperty="STATUS">
 							<Label text="{i18n>historyStatusLabel}"/>
 							<table:template>
-								<Text text="{historyModel>STATUS}"/>
-							</table:template>
-						</table:Column>
-						<table:Column width="8rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
-							<Label text="{i18n>historyAckCodeLabel}"/>
-							<table:template>
-								<Text text="{historyModel>ACK_CODE}"/>
+								<VBox>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusNew" visible="{= ${historyModel>STATUS} === '01'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusWait" visible="{= ${historyModel>STATUS} === '02'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusSent" visible="{= ${historyModel>STATUS} === '03'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCanc" visible="{= ${historyModel>STATUS} === '04'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusBtpErr" visible="{= ${historyModel>STATUS} === '05'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusDtErr" visible="{= ${historyModel>STATUS} === '06'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusResend" visible="{= ${historyModel>STATUS} === '07'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCompleted" visible="{= ${historyModel>STATUS} === '08'}"/>
+									<Text text="{ path: 'historyModel>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCommErr" visible="{= ${historyModel>STATUS} === '09'}"/>
+								</VBox>
 							</table:template>
 						</table:Column>
 						<table:Column width="10rem" sortProperty="INSERT_DATE" filterProperty="INSERT_DATE">
-							<Label text="{i18n>historyDateLabel}"/>
+							<Label text="{i18n>historyInsertDateLabel}"/>
 							<table:template>
 								<Text text="{ path: 'historyModel>INSERT_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="8rem" sortProperty="TIMESTAMP" filterProperty="TIMESTAMP">
-							<Label text="{i18n>historyTimeLabel}"/>
+						<table:Column width="8rem" sortProperty="INSERT_TIME" filterProperty="INSERT_TIME">
+							<Label text="{i18n>historyInsertTimeLabel}"/>
 							<table:template>
-								<Text text="{ path: 'historyModel>TIMESTAMP', formatter: '.formatter.formatTimeString' }"/>
+								<Text text="{ path: 'historyModel>INSERT_TIME', formatter: '.formatter.formatTimeString' }"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="10rem" sortProperty="USER" filterProperty="USER">
-							<Label text="{i18n>historyUserLabel}"/>
+						<table:Column width="10rem" sortProperty="UPDATE_DATE" filterProperty="UPDATE_DATE">
+							<Label text="{i18n>historyUpdateDateLabel}"/>
 							<table:template>
-								<Text text="{historyModel>USER}"/>
+								<Text text="{ path: 'historyModel>UPDATE_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
+							</table:template>
+						</table:Column>
+						<table:Column width="10rem" sortProperty="USER_UPDATE" filterProperty="USER_UPDATE">
+							<Label text="{i18n>historyUserUpdateLabel}"/>
+							<table:template>
+								<Text text="{historyModel>USER_UPDATE}"/>
 							</table:template>
 						</table:Column>
 						<table:Column width="12rem" sortProperty="FILE_NAME" filterProperty="FILE_NAME">
-							<Label text="{i18n>historyCsvFileNameLabel}"/>
+							<Label text="{i18n>historyFileNameLabel}"/>
 							<table:template>
 								<Text text="{historyModel>FILE_NAME}"/>
-							</table:template>
-						</table:Column>
-						<table:Column width="12rem" sortProperty="FILE_NAME_ACK" filterProperty="FILE_NAME_ACK">
-							<Label text="{i18n>historyAckFileNameLabel}"/>
-							<table:template>
-								<Text text="{historyModel>FILE_NAME_ACK}"/>
 							</table:template>
 						</table:Column>
 						<table:Column width="10rem" sortProperty="ACK_DATE" filterProperty="ACK_DATE">
@@ -104,18 +108,6 @@
 							<Label text="{i18n>historyFileContentIdLabel}"/>
 							<table:template>
 								<Text text="{historyModel>FILE_CONTENT_ID}"/>
-							</table:template>
-						</table:Column>
-						<table:Column width="10rem" sortProperty="ERROR_STEP" filterProperty="ERROR_STEP">
-							<Label text="{i18n>historyErrorStepLabel}"/>
-							<table:template>
-								<Text text="{historyModel>ERROR_STEP}"/>
-							</table:template>
-						</table:Column>
-						<table:Column width="16rem" sortProperty="ERROR_MESSAGE" filterProperty="ERROR_MESSAGE">
-							<Label text="{i18n>historyMessageLabel}"/>
-							<table:template>
-								<Text text="{historyModel>ERROR_MESSAGE}"/>
 							</table:template>
 						</table:Column>
 					</table:columns>

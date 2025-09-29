@@ -1,5 +1,5 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-	<Dialog id="companyValueHelpDialog" title="{i18n>selectCompanies}" contentWidth="800px" contentHeight="600px">
+	<Dialog id="companyValueHelpDialog" title="{i18n>selectCompanies}" contentWidth="60%" contentHeight="60%">
 		<content>
 			<!-- Search Input -->
 			<HBox class="sapUiSmallMargin">
@@ -15,7 +15,7 @@
 				   growingThreshold="50"
 				   mode="MultiSelect"
 				   selectionChange=".onCompanyTableSelectionChange"
-				   items="{filterModel>/filteredCompanySuggestions}">
+				   items="{filterModel>/companySuggestions}">
 				<columns>
 					<Column width="15%">
 						<Label text="{i18n>companyCode}"/>

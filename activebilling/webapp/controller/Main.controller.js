@@ -312,18 +312,8 @@ sap.ui.define([
                 controller: this
             }).then(function(oDialog) {
                 that.getView().addDependent(oDialog);
-                
-                // Initialize filtered suggestions with all companies
-                that._initializeFilteredCompanies();
-                
                 return oDialog;
             });
-        },
-
-        _initializeFilteredCompanies: function() {
-            const oFilterModel = this.getView().getModel("filterModel");
-            const aAllCompanies = oFilterModel.getProperty("/companySuggestions") || [];
-            oFilterModel.setProperty("/filteredCompanySuggestions", aAllCompanies);
         },
 
         _preSelectCompanies: function() {
@@ -420,34 +410,35 @@ sap.ui.define([
         },
 
         _filterCompanies: function(sSearchQuery) {
-            const oFilterModel = this.getView().getModel("filterModel");
-            const aAllCompanies = oFilterModel.getProperty("/companySuggestions") || [];
+            const oTable = this.byId("companyValueHelpTable");
+            const oBinding = oTable.getBinding("items");
             
-            if (!sSearchQuery || sSearchQuery.trim() === "") {
-                // Show all companies if search is empty
-                oFilterModel.setProperty("/filteredCompanySuggestions", aAllCompanies);
+            if (!oBinding) {
                 return;
             }
             
-            const sQuery = sSearchQuery.toLowerCase().trim();
+            if (!sSearchQuery || sSearchQuery.trim() === "") {
+                // Clear all filters if search is empty
+                oBinding.filter([]);
+                return;
+            }
             
-            // Filter companies based on search query
-            const aFilteredCompanies = aAllCompanies.filter(function(oCompany) {
-                // Search in multiple fields
-                const sBUKRS = (oCompany.BUKRS || "").toLowerCase();
-                const sFlowDescription = (oCompany.FLOW_DESCRIPTION || "").toLowerCase();
-                const sCountryClient = (oCompany.COUNTRY_CLIENT || "").toLowerCase();
-                const sVatProvider = (oCompany.VAT_PROVIDER || "").toLowerCase();
-                const sFlow = (oCompany.FLOW || "").toLowerCase();
-                
-                return sBUKRS.includes(sQuery) ||
-                       sFlowDescription.includes(sQuery) ||
-                       sCountryClient.includes(sQuery) ||
-                       sVatProvider.includes(sQuery) ||
-                       sFlow.includes(sQuery);
-            });
+            const sQuery = sSearchQuery.trim();
             
-            oFilterModel.setProperty("/filteredCompanySuggestions", aFilteredCompanies);
+            // Create SAP UI5 filters for multiple fields
+            const aFilters = [
+                new Filter("BUKRS", FilterOperator.Contains, sQuery),
+                new Filter("FLOW_DESCRIPTION", FilterOperator.Contains, sQuery),
+                new Filter("COUNTRY_CLIENT", FilterOperator.Contains, sQuery),
+                new Filter("VAT_PROVIDER", FilterOperator.Contains, sQuery),
+                new Filter("FLOW", FilterOperator.Contains, sQuery)
+            ];
+            
+            // Combine filters with OR logic
+            const oCombinedFilter = new Filter(aFilters, false);
+            
+            // Apply filter to table binding
+            oBinding.filter(oCombinedFilter);
         },
 
         onMultiInputTokenUpdate: function (oEvent) {
@@ -802,10 +793,10 @@ sap.ui.define([
                 // Save ACK User data to EINV_DOCUMENT_LIST via POST
                 await this._saveAckUserToHistory(oCurrentDocument, sSelectedAckCode, sAckUserText);
 
-                // Close dialog
-                this.onAckUserCancel();
+            // Close dialog
+            this.onAckUserCancel();
 
-                MessageToast.show(this._getText("ackUserAssignedSuccess"));
+            MessageToast.show(this._getText("ackUserAssignedSuccess"));
             } catch (error) {
                 MessageBox.error("Failed to assign ACK user: " + error.message);
             }
@@ -815,10 +806,10 @@ sap.ui.define([
             try {
                 // Prepare update data with ACK user fields
                 const oUpdateData = {
-                    ACK_CODE: sAckCode,
+                ACK_CODE: sAckCode,
                     ACK_USER: sAckCode,
                     ACK_USER_DESCR: sAckUserText || "",
-                    ACK_DATE: new Date().toISOString().split('T')[0],
+                ACK_DATE: new Date().toISOString().split('T')[0],
                     ACK_TIME: new Date().toTimeString().split(' ')[0]
                 };
                 
@@ -836,24 +827,24 @@ sap.ui.define([
                 }
 
                 // Update the main document's ACK_USER_DESCR and ACK_USER fields locally
-                const oAppModel = this.getView().getModel("app");
-                const aDocuments = oAppModel.getProperty("/rows");
-                const oDocumentToUpdate = aDocuments.find(doc => 
-                    doc.BUKRS === oDocument.BUKRS && 
-                    doc.BELNR === oDocument.BELNR && 
-                    doc.GJAHR === oDocument.GJAHR
-                );
-                
-                if (oDocumentToUpdate) {
-                    oDocumentToUpdate.ACK_CODE = sAckCode;
-                    oDocumentToUpdate.ACK_USER_DESCR = sAckUserText || "";
+            const oAppModel = this.getView().getModel("app");
+            const aDocuments = oAppModel.getProperty("/rows");
+            const oDocumentToUpdate = aDocuments.find(doc => 
+                doc.BUKRS === oDocument.BUKRS && 
+                doc.BELNR === oDocument.BELNR && 
+                doc.GJAHR === oDocument.GJAHR
+            );
+            
+            if (oDocumentToUpdate) {
+                oDocumentToUpdate.ACK_CODE = sAckCode;
+                oDocumentToUpdate.ACK_USER_DESCR = sAckUserText || "";
                     oDocumentToUpdate.ACK_USER = sAckCode;
-                    oDocumentToUpdate.ACK_DATE = new Date().toISOString().split('T')[0];
-                    oDocumentToUpdate.ACK_TIME = new Date().toTimeString().split(' ')[0];
-                    
-                    // Refresh the model to update the UI
-                    oAppModel.refresh();
-                }
+                oDocumentToUpdate.ACK_DATE = new Date().toISOString().split('T')[0];
+                oDocumentToUpdate.ACK_TIME = new Date().toTimeString().split(' ')[0];
+                
+                // Refresh the model to update the UI
+                oAppModel.refresh();
+            }
             } catch (error) {
                 MessageToast.show("Failed to assign ACK user: " + error.message);
             }
@@ -878,56 +869,44 @@ sap.ui.define([
         },
 
         _loadDocumentHistory: function(oDocument) {
-            // TODO: Replace with real API call to fetch history from EINV_DOCUMENT_HISTORY
-            // Example: await fetch(`${this.baseUrl}/history?bukrs=${oDocument.BUKRS}&belnr=${oDocument.BELNR}&gjahr=${oDocument.GJAHR}`)
-            
-            // Mock history data for demonstration
-            const aMockHistoryData = [
-                {
-                    MANDT: "100",
-                    BUKRS: oDocument.BUKRS,
-                    BELNR: oDocument.BELNR,
-                    GJAHR: oDocument.GJAHR,
-                    RECORD_TYPE: "01",
-                    STATUS: "01",
-                    ACK_CODE: "",
-                    TIMESTAMP: "20250120120000",
-                    USER: "SYSTEM",
-                    FILE_NAME: "invoice_001.csv",
-                    FILE_NAME_ACK: "",
-                    ACK_DATE: "",
-                    ACK_TIME: "",
-                    FILE_CONTENT_ID: "CONTENT_001",
-                    ERROR_STEP: "",
-                    ERROR_MESSAGE: ""
-                },
-                {
-                    MANDT: "100",
-                    BUKRS: oDocument.BUKRS,
-                    BELNR: oDocument.BELNR,
-                    GJAHR: oDocument.GJAHR,
-                    RECORD_TYPE: "02",
-                    STATUS: "03",
-                    ACK_CODE: "USR01",
-                    TIMESTAMP: "20250120130000",
-                    USER: "ADMIN",
-                    FILE_NAME: "invoice_001.csv",
-                    FILE_NAME_ACK: "ack_001.xml",
-                    ACK_DATE: "2025-01-20",
-                    ACK_TIME: "13:00:00",
-                    FILE_CONTENT_ID: "CONTENT_001",
-                    ERROR_STEP: "",
-                    ERROR_MESSAGE: "Document sent successfully"
-                }
-            ];
-
             const oHistoryModel = this.getView().getModel("historyModel");
-            oHistoryModel.setProperty("/historyData", aMockHistoryData);
             
+            // Show loading message
+            MessageToast.show(this._oBundleI18n.getText("loadingHistory"));
+            
+            // Build filter parameters for the specific document
+            const sFilter = `BUKRS eq '${oDocument.BUKRS}' and BELNR eq '${oDocument.BELNR}' and GJAHR eq '${oDocument.GJAHR}'`;
+            const sUrl = ServiceConfig.getServiceUrl("documentHistory") + `?$filter=${encodeURIComponent(sFilter)}&$orderby=INSERT_DATE desc,INSERT_TIME desc`;
+            
+            fetch(sUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        // Use the data directly from the API - no transformation needed
+                        oHistoryModel.setProperty("/historyData", data.value);
+                        
+                        const iCount = data.value.length;
+                        MessageToast.show(this._oBundleI18n.getText("historyLoadedSuccess", [iCount]));
+                    } else {
+                        oHistoryModel.setProperty("/historyData", []);
+                        MessageToast.show(this._oBundleI18n.getText("noHistoryRecords"));
+                    }
+                })
+                .catch(error => {
+                    MessageToast.show(this._oBundleI18n.getText("historyLoadError") + ": " + error.message);
+                    oHistoryModel.setProperty("/historyData", []);
+                })
+                .finally(() => {
             // Check if user has download permission (mock for now)
             const oRoleModel = this.getView().getModel("roleModel");
             const bCanDownload = oRoleModel.getProperty("/canDownloadCsv");
             oHistoryModel.setProperty("/hasDownloadPermission", bCanDownload);
+                });
         },
 
         _openHistoryDialog: function() {
