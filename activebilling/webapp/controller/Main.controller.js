@@ -1010,6 +1010,10 @@ sap.ui.define([
                 this._oHistoryDialog.destroy();
                 this._oHistoryDialog = null;
             }
+            if (this._oTestEndpointDialog) {
+                this._oTestEndpointDialog.destroy();
+                this._oTestEndpointDialog = null;
+            }
         },
         
         // Load dynamic filter data from entities
@@ -1188,9 +1192,121 @@ sap.ui.define([
                     MessageToast.show("Failed to load documents: " + error.message);
                     oAppModel.setProperty("/rows", []);
                 });
+        },
+
+        // ===== GENERIC ENDPOINT TESTING FUNCTION =====
+        onTestEndpoint: function() {
+            if (!this._oTestEndpointDialog) {
+                this._oTestEndpointDialog = sap.ui.xmlfragment(
+                    "cnh.ab.activebilling.view.dialogs.TestEndpointDialog",
+                    this
+                );
+                this.getView().addDependent(this._oTestEndpointDialog);
+            }
+            this._oTestEndpointDialog.open();
+        },
+
+        onTestEndpointExecute: async function() {
+            const oEndpointInput = this.byId("testEndpointInput");
+            const oMethodSelect = this.byId("testMethodSelect");
+            const oRequestBody = this.byId("testRequestBody");
+            const oResponseArea = this.byId("testResponseArea");
+
+            const sEndpoint = oEndpointInput.getValue();
+            const sMethod = oMethodSelect.getSelectedKey() || "GET";
+            const sRequestBody = oRequestBody.getValue();
+
+            if (!sEndpoint) {
+                MessageBox.error("Please enter an endpoint URL");
+                return;
+            }
+
+            // Show loading
+            oResponseArea.setValue("Testing endpoint...");
+            this.showBusy();
+
+            try {
+                // Build the full URL
+                let sFullUrl = sEndpoint;
+                if (!sEndpoint.startsWith('http')) {
+                    // If it's a relative URL, use ServiceConfig base URL
+                    if (sEndpoint.startsWith('/odata/v4/catalg/')) {
+                        // Full entity path provided
+                        sFullUrl = sEndpoint;
+                    } else if (sEndpoint.startsWith('/')) {
+                        // Just entity name provided, prepend base URL
+                        sFullUrl = ServiceConfig.getServiceRootUrl() + sEndpoint.substring(1);
+                    } else {
+                        // Just entity name without slash
+                        sFullUrl = ServiceConfig.getServiceRootUrl() + sEndpoint;
+                    }
+                }
+
+                // Prepare request options
+                const oRequestOptions = {
+                    method: sMethod,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                };
+
+                // Add body for POST/PATCH requests
+                if ((sMethod === "POST" || sMethod === "PATCH") && sRequestBody) {
+                    oRequestOptions.body = sRequestBody;
+                }
+
+                // Execute the request
+                const response = await fetch(sFullUrl, oRequestOptions);
+                const sResponseText = await response.text();
+                
+                // Format response for display
+                let sFormattedResponse = `Status: ${response.status} ${response.statusText}\n`;
+                sFormattedResponse += `Headers: ${JSON.stringify([...response.headers.entries()], null, 2)}\n\n`;
+                
+                // Try to parse as JSON, otherwise show as text
+                try {
+                    const oJsonResponse = JSON.parse(sResponseText);
+                    sFormattedResponse += `Body:\n${JSON.stringify(oJsonResponse, null, 2)}`;
+                } catch (e) {
+                    sFormattedResponse += `Body (text):\n${sResponseText}`;
+                }
+
+                oResponseArea.setValue(sFormattedResponse);
+                MessageToast.show(`Endpoint test completed - Status: ${response.status}`);
+
+            } catch (error) {
+                const sErrorMessage = `Error: ${error.message}\n\nStack: ${error.stack}`;
+                oResponseArea.setValue(sErrorMessage);
+                MessageBox.error("Endpoint test failed: " + error.message);
+            } finally {
+                this.hideBusy();
+            }
+        },
+
+        onTestEndpointClose: function() {
+            this._oTestEndpointDialog.close();
+        },
+
+        onQuickTestDocumentList: async function() {
+            this.showBusy();
+            try {
+                // Use the ServiceConfig to get the correct URL with query parameters
+                const sFullUrl = ServiceConfig.getServiceUrl("documentList", { "$top": "5" });
+                
+                const response = await fetch(sFullUrl);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    MessageToast.show(`Quick test successful! Got ${data.value ? data.value.length : 0} records`);
+                } else {
+                    MessageToast.show(`Quick test failed with status: ${response.status}`);
+                }
+            } catch (error) {
+                MessageToast.show("Quick test failed: " + error.message);
+            } finally {
+                this.hideBusy();
+            }
         }
-
-
 
     });
 });

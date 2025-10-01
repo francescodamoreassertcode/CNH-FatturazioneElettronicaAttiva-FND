@@ -156,6 +156,8 @@
 					<OverflowToolbar class="sapUiMediumMarginTop">
 						<Title text="{i18n>DocumentListTable} ({= ${app>/rows}.length})" level="H2"/>
 						<ToolbarSpacer/>
+						<!-- <Button text="Test Endpoint" type="Default" icon="sap-icon://test-tube" press=".onTestEndpoint" tooltip="Test any endpoint"/>
+						<Button text="Quick Test" type="Default" icon="sap-icon://play" press=".onQuickTestDocumentList" tooltip="Quick test Document List endpoint"/> -->
 						<Button text="{i18n>ResendBtn}" type="Emphasized" customData:function="Resend" press=".onTableBtnPressed"/>
 						<Button text="{i18n>CancelBtn}" type="Emphasized" customData:function="Cancel" press=".onTableBtnPressed"/>
 					</OverflowToolbar>
