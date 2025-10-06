@@ -30,5 +30,7 @@ server:
       configuration:
         ignoreCertErrors: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
         backend:
-          - path: /odata/v4/catalg
-            destination: EINV_CAP_BackEnd_SRV
+          - path: /http
+            url: https://int-cert01.it-cpi026-rt.cfapps.eu10-002.hana.ondemand.com
+            destination: ITS_DEST
+            authenticationType: OAuth2ClientCredentials

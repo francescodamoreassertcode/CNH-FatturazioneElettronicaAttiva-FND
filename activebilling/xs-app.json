@@ -3,9 +3,9 @@
   "authenticationMethod": "route",
   "routes": [
     {
-      "source": "^/odata/v4/catalg/(.*)$",
-      "target": "/odata/v4/catalg/$1",
-      "destination": "EINV_CAP_BackEnd_SRV",
+      "source": "^/http/(.*)$",
+      "target": "/http/$1",
+      "destination": "ITS_DEST",
       "authenticationType": "xsuaa",
       "csrfProtection": false
     },

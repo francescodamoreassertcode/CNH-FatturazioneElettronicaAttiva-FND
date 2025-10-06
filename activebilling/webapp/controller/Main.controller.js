@@ -583,7 +583,7 @@ sap.ui.define([
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity
-                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oRowData.ID})`, {
+                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList", null, this)}(${oRowData.ID})`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -613,7 +613,7 @@ sap.ui.define([
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity
-                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oRowData.ID})`, {
+                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList", null, this)}(${oRowData.ID})`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -870,7 +870,7 @@ sap.ui.define([
             
             // Build filter parameters for the specific document
             const sFilter = `BUKRS eq '${oDocument.BUKRS}' and BELNR eq '${oDocument.BELNR}' and GJAHR eq '${oDocument.GJAHR}'`;
-            const sUrl = ServiceConfig.getServiceUrl("documentHistory") + `?$filter=${encodeURIComponent(sFilter)}&$orderby=INSERT_DATE desc,INSERT_TIME desc`;
+            const sUrl = ServiceConfig.getServiceUrl("documentHistory", null, this) + `?$filter=${encodeURIComponent(sFilter)}&$orderby=INSERT_DATE desc,INSERT_TIME desc`;
             
             fetch(sUrl)
                 .then(response => {
@@ -1032,7 +1032,7 @@ sap.ui.define([
 
         // Load Document Type options from EINV_INVOICE_CODE entity
         _loadDocumentTypes: function() {
-            return fetch(ServiceConfig.getServiceUrl("invoiceCode"))
+            return fetch(ServiceConfig.getServiceUrl("invoiceCode", null, this))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1076,7 +1076,7 @@ sap.ui.define([
 
         // Load Origin System options from EINV_SOURCE_SYSTEM entity
         _loadOriginSystems: function() {
-            return fetch(ServiceConfig.getServiceUrl("sourceSystem"))
+            return fetch(ServiceConfig.getServiceUrl("sourceSystem", null, this))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1110,7 +1110,7 @@ sap.ui.define([
 
         // Load Company data from EINV_COMPANY_MASTER_DATA entity
         _loadCompanyData: function() {
-            return fetch(ServiceConfig.getServiceUrl("companyMaster"))
+            return fetch(ServiceConfig.getServiceUrl("companyMaster", null, this))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1162,7 +1162,7 @@ sap.ui.define([
             }
 
             // Build the complete URL with optional query parameters
-            let sUrl = ServiceConfig.getServiceUrl("documentList");
+            let sUrl = ServiceConfig.getServiceUrl("documentList", null, this);
             if (sQueryParams) {
                 sUrl += (sUrl.includes('?') ? '&' : '?') + sQueryParams;
             }
@@ -1287,21 +1287,32 @@ sap.ui.define([
             this._oTestEndpointDialog.close();
         },
 
+        // Quick test for getCAPDocumentList endpoint
         onQuickTestDocumentList: async function() {
             this.showBusy();
             try {
-                // Use the ServiceConfig to get the correct URL with query parameters
-                const sFullUrl = ServiceConfig.getServiceUrl("documentList", { "$top": "5" });
-                
-                const response = await fetch(sFullUrl);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    MessageToast.show(`Quick test successful! Got ${data.value ? data.value.length : 0} records`);
-                } else {
-                    MessageToast.show(`Quick test failed with status: ${response.status}`);
-                }
+                // Use ServiceConfig to build the URL (now includes app module path automatically)
+                const fullUrl = ServiceConfig.getServiceUrl("documentList", null, this);
+
+                console.log("Testing URL:", fullUrl);
+
+                // Use jQuery AJAX like project1
+                $.ajax({
+                    url: fullUrl,
+                    method: "GET",
+                    contentType: "application/json",
+                    success: function (data) {
+                        console.log("Quick test successful:", data);
+                        MessageToast.show(`Quick test successful! Got response: ${JSON.stringify(data).substring(0, 100)}...`);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Quick test failed:", status, error);
+                        console.error("Response:", xhr.responseText);
+                        MessageToast.show(`Quick test failed: ${status} - ${error}`);
+                    }
+                });
             } catch (error) {
+                console.error("Quick test error:", error);
                 MessageToast.show("Quick test failed: " + error.message);
             } finally {
                 this.hideBusy();

@@ -7,36 +7,37 @@ sap.ui.define([], () => {
 
     return {
         // Base service URL
-        baseUrl: "/odata/v4/catalg",
+        baseUrl: "/http",
         
-        // Available endpoints mapping
+        // Available endpoints mapping (matching backend API methods)
         endpoints: {
-            documentList: "EINV_DOCUMENT_LIST",
-            companyMaster: "EINV_COMPANY_MASTER_DATA", 
-            documentHistory: "EINV_DOCUMENT_HISTORY",
-            invoiceCode: "EINV_INVOICE_CODE",
-            taxCode: "EINV_TAX_CODE",
-            paymentMethods: "EINV_PAYMENT_METHODS",
-            fiscalRappList: "EINV_FISCAL_RAPP_LIST",
-            fiscalRappData: "EINV_FISCAL_RAPP_DATA",
-            tipidocExclude: "EINV_TIPIDOC_EXCLUDE",
-            sourceSystem: "EINV_SOURCE_SYSTEM",
-            ackTag: "EINV_ACK_TAG",
-            checkFields: "EINV_CHECK_FIELDS",
-            tag: "EINV_TAG",
-            unmis: "EINV_UNMIS",
-            condType: "EINV_COND_TYPE",
-            text: "EINV_TEXT",
-            invSender: "EINV_INV_SENDER",
-            flowProg: "EINV_FLOW_PROG",
-            structureFile: "EINV_STRUCTURE_FILE",
-            bankData: "EINV_BANK_DATA",
-            pdf: "EINV_PDF",
-            flowSched: "EINV_FLOW_SCHED"
+            documentList: "getCAPDocumentList",
+            documentHistory: "getCAPDocumentListHistory",
+            pdfDownload: "EINV_GetInvoiceDocFromObjectStore",
+            // Legacy endpoints - may need to be updated based on actual backend methods
+            companyMaster: "getCompanyMasterData", 
+            invoiceCode: "getInvoiceCode",
+            taxCode: "getTaxCode",
+            paymentMethods: "getPaymentMethods",
+            fiscalRappList: "getFiscalRappList",
+            fiscalRappData: "getFiscalRappData",
+            tipidocExclude: "getTipidocExclude",
+            sourceSystem: "getSourceSystem",
+            ackTag: "getAckTag",
+            checkFields: "getCheckFields",
+            tag: "getTag",
+            unmis: "getUnmis",
+            condType: "getCondType",
+            text: "getText",
+            invSender: "getInvSender",
+            flowProg: "getFlowProg",
+            structureFile: "getStructureFile",
+            bankData: "getBankData",
+            flowSched: "getFlowSched"
         },
 
-        // Utility function to build service URLs
-        getServiceUrl: function(endpoint, params) {
+        // Utility function to build service URLs with app module path
+        getServiceUrl: function(endpoint, params, oController) {
             const entity = this.endpoints[endpoint] || endpoint;
             let url = `${this.baseUrl}/${entity}`;
             
@@ -45,6 +46,30 @@ sap.ui.define([], () => {
                     .map(key => `${key}=${params[key]}`)
                     .join('&');
                 url += `?${queryString}`;
+            }
+            
+            // Add app module path for deployed environments
+            try {
+                let oComponent;
+                if (oController) {
+                    oComponent = oController.getOwnerComponent();
+                } else {
+                    // Fallback: try to get component from global context
+                    const aComponents = sap.ui.core.Component.getComponents();
+                    if (aComponents && aComponents.length > 0) {
+                        oComponent = aComponents[0];
+                    }
+                }
+                
+                if (oComponent) {
+                    const appId = oComponent.getManifestEntry("/sap.app/id");
+                    const appPath = appId.replaceAll(".", "/");
+                    const appModulePath = jQuery.sap.getModulePath(appPath);
+                    url = appModulePath + url;
+                }
+            } catch (error) {
+                // If we can't get the component, return URL without app path
+                console.warn("Could not get app module path:", error);
             }
             
             return url;
@@ -57,10 +82,10 @@ sap.ui.define([], () => {
 
         // Alternative paths to test (in case the main path is wrong)
         alternativePaths: [
-            "/odata/v4/catalgservice/", 
-            "/odata/v4/CatalgService/",
-            "/odata/v2/catalg/",
-            "/api/v4/catalg/"
+            "/http/", 
+            "/odata/v4/catalog/",
+            "/odata/v4/catalg/",
+            "/api/v4/catalog/"
         ]
     };
 });
