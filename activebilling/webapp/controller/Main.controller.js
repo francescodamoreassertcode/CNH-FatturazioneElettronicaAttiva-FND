@@ -964,17 +964,69 @@ sap.ui.define([
             // Get the single selected history record
             const oContextData = oHistoryTable.getContextByIndex(aSelectedIndices[0]).getObject();
 
-            // Validate that the record has a CSV file
+            // Validate that the record has a file
             if (!oContextData.FILE_NAME) {
                 MessageBox.error(this._getText("noCsvFileAvailable"));
                 return;
             }
 
-            // TODO: Replace with real API call to download CSV
-            // Example: window.open(`${this.baseUrl}/downloadCsv?fileId=${oHistoryRecord.FILE_CONTENT_ID}`)
+            // Download PDF from Object Store using backend method
+            this._downloadPdfFromObjectStore(oContextData);
+        },
+
+        // Download PDF from Object Store using backend method
+        _downloadPdfFromObjectStore: function(oHistoryRecord) {
+            this.showBusy();
             
-            // Show success message
-            MessageBox.success(this._getText("csvDownloadSuccess", [oContextData.FILE_NAME]));
+            try {
+                // Build URL for PDF download using the backend method
+                const sUrl = ServiceConfig.getServiceUrl("pdfDownload", null, this);
+                
+                // Create payload as required by the backend
+                const oPayload = {
+                    "FileName": oHistoryRecord.FILE_NAME
+                };
+
+                // Use POST request with JSON payload as required by the backend
+                fetch(sUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/pdf, application/octet-stream'
+                    },
+                    body: JSON.stringify(oPayload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create blob URL and trigger download
+                    const url = window.URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = oHistoryRecord.FILE_NAME || 'document.pdf';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    window.URL.revokeObjectURL(url);
+                    
+                    MessageToast.show(`PDF downloaded successfully: ${oHistoryRecord.FILE_NAME}`);
+                })
+                .catch(error => {
+                    console.error("PDF download failed:", error);
+                    MessageBox.error(`PDF download failed: ${error.message}`);
+                })
+                .finally(() => {
+                    this.hideBusy();
+                });
+                
+            } catch (error) {
+                MessageBox.error(`PDF download failed: ${error.message}`);
+                this.hideBusy();
+            }
         },
 
         // Language selector functionality
