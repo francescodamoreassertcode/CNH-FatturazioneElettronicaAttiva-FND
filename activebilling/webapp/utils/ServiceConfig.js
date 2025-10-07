@@ -12,17 +12,18 @@ sap.ui.define([], () => {
         // Available endpoints mapping (matching backend API methods)
         endpoints: {
             documentList: "getCAPDocumentList",
+            patchDocumentList: "UpdateBKPF",
             documentHistory: "getCAPDocumentListHistory",
             pdfDownload: "EINV_GetInvoiceDocFromObjectStore",
             // Legacy endpoints - may need to be updated based on actual backend methods
-            companyMaster: "getCompanyMasterData", 
-            invoiceCode: "getInvoiceCode",
+            companyMaster: "getCAPMasterData", 
+            invoiceCode: "getCAPInvoiceCode",
             taxCode: "getTaxCode",
             paymentMethods: "getPaymentMethods",
             fiscalRappList: "getFiscalRappList",
             fiscalRappData: "getFiscalRappData",
             tipidocExclude: "getTipidocExclude",
-            sourceSystem: "getSourceSystem",
+            sourceSystem: "getCAPSourceSystem",
             ackTag: "getAckTag",
             checkFields: "getCheckFields",
             tag: "getTag",

@@ -284,7 +284,7 @@
 					<table:Column width="8rem" sortProperty="FISC_RAP" filterProperty="FISC_RAP">
 						<Label text="{i18n>fisc_rap}"/>
 						<table:template>
-							<CheckBox selected="{app>FISC_RAP}" 
+							<CheckBox selected="false" 
 								enabled="false"/>
 						</table:template>
 					</table:Column>

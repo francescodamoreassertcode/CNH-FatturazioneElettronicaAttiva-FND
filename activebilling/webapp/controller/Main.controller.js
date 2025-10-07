@@ -582,8 +582,8 @@ sap.ui.define([
                     STATUS: "07"
                 };
                 
-                // Make PATCH call to EINV_DOCUMENT_LIST entity
-                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList", null, this)}(${oRowData.ID})`, {
+                // Make PATCH call to EINV_DOCUMENT_LIST entity using composite key
+                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList", null, this)}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -612,8 +612,8 @@ sap.ui.define([
                     STATUS: "04"
                 };
                 
-                // Make PATCH call to EINV_DOCUMENT_LIST entity
-                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList", null, this)}(${oRowData.ID})`, {
+                // Make PATCH call to EINV_DOCUMENT_LIST entity using composite key
+                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList", null, this)}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -807,8 +807,8 @@ sap.ui.define([
                     ACK_TIME: new Date().toTimeString().split(' ')[0]
                 };
                 
-                // Make PATCH call to EINV_DOCUMENT_LIST entity to update ACK user fields
-                const response = await fetch(`${ServiceConfig.getServiceUrl("documentList")}(${oDocument.ID})`, {
+                // Make PATCH call to EINV_DOCUMENT_LIST entity to update ACK user fields using composite key
+                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList")}(BUKRS='${oDocument.BUKRS}',GJAHR='${oDocument.GJAHR}',BELNR='${oDocument.BELNR}')`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -862,46 +862,49 @@ sap.ui.define([
             this._openHistoryDialog();
         },
 
-        _loadDocumentHistory: function(oDocument) {
-            const oHistoryModel = this.getView().getModel("historyModel");
-            
-            // Show loading message
-            MessageToast.show(this._oBundleI18n.getText("loadingHistory"));
-            
-            // Build filter parameters for the specific document
-            const sFilter = `BUKRS eq '${oDocument.BUKRS}' and BELNR eq '${oDocument.BELNR}' and GJAHR eq '${oDocument.GJAHR}'`;
-            const sUrl = ServiceConfig.getServiceUrl("documentHistory", null, this) + `?$filter=${encodeURIComponent(sFilter)}&$orderby=INSERT_DATE desc,INSERT_TIME desc`;
-            
-            fetch(sUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.value) {
-                        // Use the data directly from the API - no transformation needed
-                        oHistoryModel.setProperty("/historyData", data.value);
-                        
-                        const iCount = data.value.length;
-                        MessageToast.show(this._oBundleI18n.getText("historyLoadedSuccess", [iCount]));
-                    } else {
-                        oHistoryModel.setProperty("/historyData", []);
-                        MessageToast.show(this._oBundleI18n.getText("noHistoryRecords"));
-                    }
-                })
-                .catch(error => {
-                    MessageToast.show(this._oBundleI18n.getText("historyLoadError") + ": " + error.message);
+    _loadDocumentHistory: function(oDocument) {
+        const oHistoryModel = this.getView().getModel("historyModel");
+
+        // Show loading message
+        MessageToast.show(this._oBundleI18n.getText("loadingHistory"));
+
+        // Construct the filter expression
+        const sFilter = `BUKRS eq '${oDocument.BUKRS}' and BELNR eq '${oDocument.BELNR}' and GJAHR eq '${oDocument.GJAHR}'`;
+
+        // Encode and build the URL using $apply instead of $filter
+        const sApply = `$apply=filter(${sFilter})`;
+        const sUrl = ServiceConfig.getServiceUrl("documentHistory") + `?${encodeURIComponent(sApply)}`;
+
+        fetch(sUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.value) {
+                    oHistoryModel.setProperty("/historyData", data.value);
+
+                    const iCount = data.value.length;
+                    MessageToast.show(this._oBundleI18n.getText("historyLoadedSuccess", [iCount]));
+                } else {
                     oHistoryModel.setProperty("/historyData", []);
-                })
-                .finally(() => {
-            // Check if user has download permission (mock for now)
-            const oRoleModel = this.getView().getModel("roleModel");
-            const bCanDownload = oRoleModel.getProperty("/canDownloadCsv");
-            oHistoryModel.setProperty("/hasDownloadPermission", bCanDownload);
-                });
+                    MessageToast.show(this._oBundleI18n.getText("noHistoryRecords"));
+                }
+            })
+            .catch(error => {
+                MessageToast.show(this._oBundleI18n.getText("historyLoadError") + ": " + error.message);
+                oHistoryModel.setProperty("/historyData", []);
+            })
+            .finally(() => {
+                // Check if user has download permission
+                const oRoleModel = this.getView().getModel("roleModel");
+                const bCanDownload = oRoleModel.getProperty("/canDownloadCsv");
+                oHistoryModel.setProperty("/hasDownloadPermission", bCanDownload);
+            });
         },
+
 
         _openHistoryDialog: function() {
             if (!this._oHistoryDialog) {
@@ -1093,20 +1096,20 @@ sap.ui.define([
                 })
                 .then(data => {
                     if (data && data.value) {
-                        // Create a Set to store unique combinations of DOCUMENT_TYPE and DOCUMENT_TYPE_TEXT
+                        // Create a Set to store unique combinations of INV_TYPE and INV_TYPE_TEXT
                         const uniqueCombinations = new Set();
                         const aDocumentTypes = [];
                         
                         data.value.forEach(item => {
-                            if (item.DOCUMENT_TYPE && item.DOCUMENT_TYPE_TEXT) {
-                                const combination = `${item.DOCUMENT_TYPE}|${item.DOCUMENT_TYPE_TEXT}`;
+                            if (item.INV_TYPE && item.INV_TYPE_TEXT) {
+                                const combination = `${item.INV_TYPE}|${item.INV_TYPE_TEXT}`;
                                 
                                 // Only add if this combination hasn't been seen before
                                 if (!uniqueCombinations.has(combination)) {
                                     uniqueCombinations.add(combination);
                                     aDocumentTypes.push({
-                                        key: item.DOCUMENT_TYPE,
-                                        text: `${item.DOCUMENT_TYPE} - ${item.DOCUMENT_TYPE_TEXT}`
+                                        key: item.INV_TYPE,
+                                        text: `${item.INV_TYPE} - ${item.INV_TYPE_TEXT}`
                                     });
                                 }
                             }
