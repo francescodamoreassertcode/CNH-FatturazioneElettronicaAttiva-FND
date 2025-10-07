@@ -163,15 +163,15 @@ sap.ui.define([
             if (!status) return "";
             
             const statusMap = {
-                "01": "01-NEW",
-                "02": "02-WAIT", 
-                "03": "03-SENT",
-                "04": "04-CANC",
-                "05": "05-BTP_ERR",
-                "06": "06-DT_ERR",
-                "07": "07-RESEND",
-                "08": "08-COMPLETED",
-                "09": "09-COMM_ERR"
+                "01": "NEW",
+                "02": "WAIT", 
+                "03": "SENT",
+                "04": "CANC",
+                "05": "BTP_ERR",
+                "06": "DT_ERR",
+                "07": "RESEND",
+                "08": "COMPLETED",
+                "09": "COMM_ERR"
             };
             
             return statusMap[status] || status;

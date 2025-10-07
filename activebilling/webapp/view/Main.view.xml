@@ -90,10 +90,10 @@
                             </fb:control>
                         </fb:FilterGroupItem>
 
-                        <!-- BLART (Document Type, multi selection) -->
-                        <fb:FilterGroupItem name="BLART" label="{i18n>blart}" groupName="Group1" visibleInFilterBar="true">
+                        <!-- INV_TYPE (Invoice Type, multi selection) -->
+                        <fb:FilterGroupItem name="INV_TYPE" label="{i18n>inv_type}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
-                                <MultiComboBox selectedKeys="{filterModel>/BLART}" change=".onMultiComboBoxChange" items="{filterModel>/documentTypes}">
+                                <MultiComboBox selectedKeys="{filterModel>/INV_TYPE}" change=".onMultiComboBoxChange" items="{filterModel>/invoiceTypes}">
                                     <core:Item key="{filterModel>key}" text="{filterModel>text}"/>
                                 </MultiComboBox>
                             </fb:control>
@@ -112,15 +112,15 @@
                         <fb:FilterGroupItem name="STATUS" label="{i18n>status}" groupName="Group1" visibleInFilterBar="true">
                             <fb:control>
                                 <MultiComboBox selectedKeys="{filterModel>/STATUS}" change=".onMultiComboBoxChange">
-                                    <core:Item key="01" text="01-NEW"/>
-                                    <core:Item key="02" text="02-WAIT"/>
-                                    <core:Item key="03" text="03-SENT"/>
-                                    <core:Item key="04" text="04-CANC"/>
-                                    <core:Item key="05" text="05-BTP_ERR"/>
-                                    <core:Item key="06" text="06-DT_ERR"/>
-                                    <core:Item key="07" text="07-RESEND"/>
-                                    <core:Item key="08" text="08-COMPLETED"/>
-                                    <core:Item key="09" text="09-COMM_ERR"/>
+                                    <core:Item key="01" text="NEW"/>
+                                    <core:Item key="02" text="WAIT"/>
+                                    <core:Item key="03" text="SENT"/>
+                                    <core:Item key="04" text="CANC"/>
+                                    <core:Item key="05" text="BTP_ERR"/>
+                                    <core:Item key="06" text="DT_ERR"/>
+                                    <core:Item key="07" text="RESEND"/>
+                                    <core:Item key="08" text="COMPLETED"/>
+                                    <core:Item key="09" text="COMM_ERR"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>

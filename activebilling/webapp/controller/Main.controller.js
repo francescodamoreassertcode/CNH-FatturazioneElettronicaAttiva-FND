@@ -733,7 +733,7 @@ sap.ui.define([
             const oClonedData = JSON.parse(JSON.stringify(oContextData));
 
             // Validate ACK_CODE
-            if (oClonedData.ACK_CODE !== "ACK0_KO") {
+            if (oClonedData.STATUS !== "05") {
                 MessageBox.error(this._getText("ackUserCodeError"));
                 return;
             }
@@ -1074,7 +1074,7 @@ sap.ui.define([
         // Load dynamic filter data from entities
         _loadFilterData: function() {
             const aPromises = [
-                this._loadDocumentTypes(),
+                this._loadInvoiceTypes(),
                 this._loadOriginSystems(),
                 this._loadCompanyData()
             ];
@@ -1085,8 +1085,8 @@ sap.ui.define([
             });
         },
 
-        // Load Document Type options from EINV_INVOICE_CODE entity
-        _loadDocumentTypes: function() {
+        // Load Invoice Type options from EINV_INVOICE_CODE entity
+        _loadInvoiceTypes: function() {
             return fetch(ServiceConfig.getServiceUrl("invoiceCode", null, this))
                 .then(response => {
                     if (!response.ok) {
@@ -1098,7 +1098,7 @@ sap.ui.define([
                     if (data && data.value) {
                         // Create a Set to store unique combinations of INV_TYPE and INV_TYPE_TEXT
                         const uniqueCombinations = new Set();
-                        const aDocumentTypes = [];
+                        const aInvoiceTypes = [];
                         
                         data.value.forEach(item => {
                             if (item.INV_TYPE && item.INV_TYPE_TEXT) {
@@ -1107,7 +1107,7 @@ sap.ui.define([
                                 // Only add if this combination hasn't been seen before
                                 if (!uniqueCombinations.has(combination)) {
                                     uniqueCombinations.add(combination);
-                                    aDocumentTypes.push({
+                                    aInvoiceTypes.push({
                                         key: item.INV_TYPE,
                                         text: `${item.INV_TYPE} - ${item.INV_TYPE_TEXT}`
                                     });
@@ -1118,14 +1118,14 @@ sap.ui.define([
                         // Store in filter model
                         const oFilterModel = this.getView().getModel("filterModel");
                         if (oFilterModel) {
-                            oFilterModel.setProperty("/documentTypes", aDocumentTypes);
+                            oFilterModel.setProperty("/invoiceTypes", aInvoiceTypes);
                         }
                         
-                        console.log("Loaded unique document types:", aDocumentTypes);
+                        console.log("Loaded unique invoice types:", aInvoiceTypes);
                     }
                 })
                 .catch(error => {
-                    console.error("Error loading document types:", error);
+                    console.error("Error loading invoice types:", error);
                 });
         },
 
