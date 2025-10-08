@@ -583,7 +583,7 @@ sap.ui.define([
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity using composite key
-                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList", null, this)}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
+                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList")}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -613,7 +613,7 @@ sap.ui.define([
                 };
                 
                 // Make PATCH call to EINV_DOCUMENT_LIST entity using composite key
-                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList", null, this)}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
+                const response = await fetch(`${ServiceConfig.getServiceUrl("patchDocumentList")}(BUKRS='${oRowData.BUKRS}',GJAHR='${oRowData.GJAHR}',BELNR='${oRowData.BELNR}')`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json"
@@ -865,15 +865,12 @@ sap.ui.define([
     _loadDocumentHistory: function(oDocument) {
         const oHistoryModel = this.getView().getModel("historyModel");
 
-        // Show loading message
         MessageToast.show(this._oBundleI18n.getText("loadingHistory"));
 
-        // Construct the filter expression
         const sFilter = `BUKRS eq '${oDocument.BUKRS}' and BELNR eq '${oDocument.BELNR}' and GJAHR eq '${oDocument.GJAHR}'`;
+        const sUrl = ServiceConfig.getServiceUrl("documentHistory", `$filter=${sFilter}`);
 
-        // Encode and build the URL using $apply instead of $filter
-        const sApply = `$apply=filter(${sFilter})`;
-        const sUrl = ServiceConfig.getServiceUrl("documentHistory") + `?${encodeURIComponent(sApply)}`;
+        console.log("Loading document history from URL:", sUrl);
 
         fetch(sUrl)
             .then(response => {
@@ -983,7 +980,7 @@ sap.ui.define([
             
             try {
                 // Build URL for PDF download using the backend method
-                const sUrl = ServiceConfig.getServiceUrl("pdfDownload", null, this);
+                const sUrl = ServiceConfig.getServiceUrl("pdfDownload");
                 
                 // Create payload as required by the backend
                 const oPayload = {
@@ -1083,7 +1080,7 @@ sap.ui.define([
 
         // Load Invoice Type options from EINV_INVOICE_CODE entity
         _loadInvoiceTypes: function() {
-            return fetch(ServiceConfig.getServiceUrl("invoiceCode", null, this))
+            return fetch(ServiceConfig.getServiceUrl("invoiceCode"))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1127,7 +1124,7 @@ sap.ui.define([
 
         // Load Origin System options from EINV_SOURCE_SYSTEM entity
         _loadOriginSystems: function() {
-            return fetch(ServiceConfig.getServiceUrl("sourceSystem", null, this))
+            return fetch(ServiceConfig.getServiceUrl("sourceSystem"))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1161,7 +1158,7 @@ sap.ui.define([
 
         // Load Company data from EINV_COMPANY_MASTER_DATA entity
         _loadCompanyData: function() {
-            return fetch(ServiceConfig.getServiceUrl("companyMaster", null, this))
+            return fetch(ServiceConfig.getServiceUrl("companyMaster"))
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1212,12 +1209,7 @@ sap.ui.define([
                 return;
             }
 
-            // Build the complete URL with optional query parameters
-            let sUrl = ServiceConfig.getServiceUrl("documentList", null, this);
-            if (sQueryParams) {
-                sUrl += (sUrl.includes('?') ? '&' : '?') + sQueryParams;
-            }
-
+            const sUrl = ServiceConfig.getServiceUrl("documentList", sQueryParams);
             console.log("Loading documents from URL:", sUrl);
 
             fetch(sUrl)
