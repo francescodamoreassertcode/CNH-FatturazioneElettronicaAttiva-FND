@@ -216,7 +216,7 @@
 									type="Transparent" 
 									icon="sap-icon://account"
 									press=".onAckUserPressed"
-									enabled="true"
+									enabled="{= (${app>STATUS} === '05'  &amp;&amp; ${app>ACK_USER} !== '')}"
 									tooltip="{i18n>mainAckUserTooltip}"/>
 							</HBox>
 						</table:template>
