@@ -6,7 +6,8 @@ sap.ui.define([
     "sap/ui/core/format/DateFormat"
 ], function (FilterOperator, Filter, NumberFormat, Format, DateFormat) {
     "use strict";
-    return {
+    
+    var Formatter = {
 		/**
 		 * Rounds the number unit value to 2 digits
 		 * @public
@@ -186,7 +187,50 @@ sap.ui.define([
             };
             
             return statusMap[status] || status;
+        },
+
+        formatAckCode: function(sAckCode) {
+            if (!sAckCode) return "";
+            
+            const codeMap = {
+                "1": "Rifiuto da DT",
+                "2": "Accettazione da DT",
+                "3": "Acquisizione DT",
+                "4": "Conservazione DT",
+                "5": "Scarto documento DT",
+                "6": "Ricevuta consegna Governo",
+                "7": "Scarto Tecnico Governo",
+                "8": "Ricevuta consegna Governo"
+            };
+            
+            return codeMap[sAckCode] || sAckCode;
+        },
+
+        getMostRecentAckCode: function(aDocumentHistories) {
+            if (!aDocumentHistories || !Array.isArray(aDocumentHistories) || aDocumentHistories.length === 0) {
+                return "";
+            }
+
+            // Find entry with the most recent ACK_DATE
+            const oMostRecent = aDocumentHistories.reduce((latest, current) => {
+                if (!latest) return current;
+                
+                const latestDate = latest.ACK_DATE ? new Date(latest.ACK_DATE) : new Date(0);
+                const currentDate = current.ACK_DATE ? new Date(current.ACK_DATE) : new Date(0);
+                
+                return currentDate > latestDate ? current : latest;
+            }, null);
+
+            return oMostRecent && oMostRecent.ACK_CODE ? oMostRecent.ACK_CODE : "";
+        },
+
+        getMostRecentAckDescription: function(aDocumentHistories) {
+            // Reuse getMostRecentAckCode to get the code, then format it
+            const sAckCode = Formatter.getMostRecentAckCode(aDocumentHistories);
+            return Formatter.formatAckCode(sAckCode);
         }
     };
+    
+    return Formatter;
 
 });

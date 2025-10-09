@@ -1153,7 +1153,17 @@ _loadDocumentData: function(sQueryParams = '') {
         return;
     }
 
-    const sUrl = ServiceConfig.getServiceUrl("documentList", sQueryParams);
+    // Add $expand parameter for documentHistories
+    let sFullQueryParams = sQueryParams;
+    const sExpandParam = '$expand=documentHistories';
+    
+    if (sFullQueryParams) {
+        sFullQueryParams += '&' + sExpandParam;
+    } else {
+        sFullQueryParams = sExpandParam;
+    }
+
+    const sUrl = ServiceConfig.getServiceUrl("documentList", sFullQueryParams);
     console.log("Loading documents from URL:", sUrl);
 
     fetch(sUrl)

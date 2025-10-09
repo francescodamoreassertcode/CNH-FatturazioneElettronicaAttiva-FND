@@ -313,13 +313,13 @@
 					<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
 						<Label text="{i18n>ack_code}"/>
 						<table:template>
-							<Text text="{app>ACK_CODE}"/>
+							<Text text="{ path: 'app>documentHistories', formatter: '.formatter.getMostRecentAckCode' }"/>
 						</table:template>
 					</table:Column>
 					<table:Column width="18rem" sortProperty="ACK_DESCRIPTION" filterProperty="ACK_DESCRIPTION">
 						<Label text="{i18n>ack_description}"/>
 						<table:template>
-							<Text text="{app>ACK_DESCRIPTION}"/>
+							<Text text="{ path: 'app>documentHistories', formatter: '.formatter.getMostRecentAckDescription' }"/>
 						</table:template>
 					</table:Column>
 					<table:Column width="12rem" sortProperty="ACK_USER" filterProperty="ACK_USER">
