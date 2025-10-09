@@ -68,10 +68,10 @@
 								<Text text="{ path: 'historyModel>INSERT_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="8rem" sortProperty="INSERT_TIME" filterProperty="INSERT_TIME">
+						<table:Column width="8rem" sortProperty="TIMESTAMP" filterProperty="TIMESTAMP">
 							<Label text="{i18n>historyInsertTimeLabel}"/>
 							<table:template>
-								<Text text="{ path: 'historyModel>INSERT_TIME', formatter: '.formatter.formatTimeString' }"/>
+								<Text text="{ path: 'historyModel>TIMESTAMP', formatter: '.formatter.formatHourOutOfTimestamp' }"/>
 							</table:template>
 						</table:Column>
 						<table:Column width="10rem" sortProperty="UPDATE_DATE" filterProperty="UPDATE_DATE">
@@ -80,10 +80,10 @@
 								<Text text="{ path: 'historyModel>UPDATE_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="10rem" sortProperty="USER_UPDATE" filterProperty="USER_UPDATE">
+						<table:Column width="10rem" sortProperty="USER" filterProperty="USER">
 							<Label text="{i18n>historyUserUpdateLabel}"/>
 							<table:template>
-								<Text text="{historyModel>USER_UPDATE}"/>
+								<Text text="{historyModel>USER}"/>
 							</table:template>
 						</table:Column>
 						<table:Column width="12rem" sortProperty="FILE_NAME" filterProperty="FILE_NAME">

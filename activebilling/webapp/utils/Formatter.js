@@ -134,6 +134,17 @@ sap.ui.define([
             return sTime;
         },
 
+        formatHourOutOfTimestamp: function (sTimestamp) {
+            const date = new Date(sTimestamp);
+            const formattedHour = date.toLocaleTimeString("it-IT", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            });
+            return formattedHour;
+        },
+
+
         formatTime: function(ms) {
             // Calculate total hours
             const totalHours = Math.floor(ms / (1000 * 60 * 60)).toString().padStart(2, "0");
