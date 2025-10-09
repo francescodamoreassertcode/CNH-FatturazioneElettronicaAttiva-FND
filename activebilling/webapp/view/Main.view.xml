@@ -319,7 +319,7 @@
 					<table:Column width="18rem" sortProperty="ACK_DESCRIPTION" filterProperty="ACK_DESCRIPTION">
 						<Label text="{i18n>ack_description}"/>
 						<table:template>
-							<Text text="{ path: 'app>documentHistories', formatter: '.formatter.getMostRecentAckDescription' }"/>
+							<Text text="{ path: 'app>documentHistories', formatter: '.getAckDescriptionI18n' }"/>
 						</table:template>
 					</table:Column>
 					<table:Column width="12rem" sortProperty="ACK_USER" filterProperty="ACK_USER">

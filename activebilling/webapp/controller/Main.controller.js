@@ -15,6 +15,15 @@ return BaseController.extend("cnh.ab.activebilling.controller.Main", {
 
 formatter: Formatter,
 
+getAckDescriptionI18n: function(aDocumentHistories) {
+    const sAckCode = Formatter.getMostRecentAckCode(aDocumentHistories);
+    if (!sAckCode) return "";
+    
+    const oResourceBundle = this.getOwnerComponent().getModel("i18n").getResourceBundle();
+    const sI18nKey = `ackCode${sAckCode}`;
+    return oResourceBundle.getText(sI18nKey, "", sAckCode); // Falls back to sAckCode if key not found
+},
+
 onInit() {
     var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
     oRouter.getRoute("RouteMain").attachMatched(this.onRouteMatched, this);
