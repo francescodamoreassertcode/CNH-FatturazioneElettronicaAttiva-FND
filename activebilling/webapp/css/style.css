@@ -117,3 +117,16 @@
     margin: 5% 0%;
     text-align: center;
 }
+
+/* Fix table scrollbar visibility */
+.sapFDynamicPageContent {
+    height: 100%;
+}
+
+#tableDocuments {
+    height: 100%;
+}
+
+#tableDocuments .sapUiTableCCnt {
+    height: 100%;
+}

@@ -147,11 +147,12 @@
 		<f:content>
 			<table:Table id="tableDocuments"
 				width="100%"
-				visibleRowCountMode="Auto"
-				minAutoRowCount="5"
 				selectionMode="Multi"
 				fixedColumnCount="5"
 				rows="{ path: 'app>/rows' }">
+				<table:rowMode>
+					<table:rowmodes.Auto minRowCount="5" />
+				</table:rowMode>
 				<table:extension>
 					<OverflowToolbar class="sapUiMediumMarginTop">
 						<Title text="{i18n>DocumentListTable} ({= ${app>/rows}.length})" level="H2"/>
