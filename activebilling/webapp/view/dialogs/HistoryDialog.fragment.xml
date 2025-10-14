@@ -25,7 +25,7 @@
 					selectionChange=".onHistorySelectionChange"
 					rows="{ path: 'historyModel>/historyData' }">
 					<table:rowMode>
-						<table:rowmodes.Auto minRowCount="1" hideEmptyRows="true" />
+						<table:rowmodes.Auto minRowCount="10" hideEmptyRows="true" />
 					</table:rowMode>
 					<table:extension>
 						<OverflowToolbar class="sapUiMediumMarginTop">
@@ -105,12 +105,12 @@
 								<Text text="{ path: 'historyModel>ACK_TIME', formatter: '.formatter.formatTimeString' }"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="12rem" sortProperty="FILE_CONTENT_ID" filterProperty="FILE_CONTENT_ID">
-							<Label text="{i18n>historyFileContentIdLabel}"/>
-							<table:template>
-								<Text text="{historyModel>FILE_CONTENT_ID}"/>
-							</table:template>
-						</table:Column>
+					<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
+						<Label text="{i18n>historyAckCodeLabel}"/>
+						<table:template>
+							<Text text="{historyModel>ACK_CODE}"/>
+						</table:template>
+					</table:Column>
 						<table:Column width="12rem" sortProperty="ERROR_MESSAGE" filterProperty="ERROR_MESSAGE">
 							<Label text="{i18n>historyErrorMessageLabel}"/>
 							<table:template>
