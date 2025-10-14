@@ -20,11 +20,11 @@
 
 /* Status Badge Styles */
 .btnStatusNew {
-    background-color: #8ED973;
+    background-color: #87CEEB;
     color: Black;
     font-weight: bold;
     border-radius: 20px;
-    border: 3px solid #8ED973;
+    border: 3px solid #87CEEB;
     padding: 0% 22%;
     margin: 5% 0%;
     text-align: center;
@@ -42,11 +42,11 @@
 }
 
 .btnStatusSent {
-    background-color: #FFFF00;
+    background-color: #FFA500;
     color: Black;
     font-weight: bold;
     border-radius: 20px;
-    border: 3px solid #FFFF00;
+    border: 3px solid #FFA500;
     padding: 0% 22%;
     margin: 5% 0%;
     text-align: center;
@@ -86,22 +86,22 @@
 }
 
 .btnStatusResend {
-    background-color: #FFCC00;
+    background-color: #FFA500;
     color: Black;
     font-weight: bold;
     border-radius: 20px;
-    border: 3px solid #FFCC00;
+    border: 3px solid #FFA500;
     padding: 0% 15%;
     margin: 5% 0%;
     text-align: center;
 }
 
 .btnStatusCompleted {
-    background-color: #A6C9EC;
+    background-color: #90EE90;
     color: Black;
     font-weight: bold;
     border-radius: 20px;
-    border: 3px solid #A6C9EC;
+    border: 3px solid #90EE90;
     padding: 0% 15%;
     margin: 5% 0%;
     text-align: center;

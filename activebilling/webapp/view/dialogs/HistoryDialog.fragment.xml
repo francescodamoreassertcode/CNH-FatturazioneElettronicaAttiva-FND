@@ -93,24 +93,6 @@
 								<Text text="{historyModel>FILE_NAME}"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="10rem" sortProperty="ACK_DATE" filterProperty="ACK_DATE">
-							<Label text="{i18n>historyAckDateLabel}"/>
-							<table:template>
-								<Text text="{ path: 'historyModel>ACK_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
-							</table:template>
-						</table:Column>
-						<table:Column width="8rem" sortProperty="ACK_TIME" filterProperty="ACK_TIME">
-							<Label text="{i18n>historyAckTimeLabel}"/>
-							<table:template>
-								<Text text="{ path: 'historyModel>ACK_TIME', formatter: '.formatter.formatTimeString' }"/>
-							</table:template>
-						</table:Column>
-					<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
-						<Label text="{i18n>historyAckCodeLabel}"/>
-						<table:template>
-							<Text text="{historyModel>ACK_CODE}"/>
-						</table:template>
-					</table:Column>
 						<table:Column width="12rem" sortProperty="ERROR_MESSAGE" filterProperty="ERROR_MESSAGE">
 							<Label text="{i18n>historyErrorMessageLabel}"/>
 							<table:template>
