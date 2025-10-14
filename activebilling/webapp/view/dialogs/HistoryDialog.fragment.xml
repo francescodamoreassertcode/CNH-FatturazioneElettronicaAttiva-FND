@@ -110,6 +110,18 @@
 								<Text text="{historyModel>FILE_CONTENT_ID}"/>
 							</table:template>
 						</table:Column>
+						<table:Column width="12rem" sortProperty="ERROR_MESSAGE" filterProperty="ERROR_MESSAGE">
+							<Label text="{i18n>historyErrorMessageLabel}"/>
+							<table:template>
+								<Text text="{historyModel>ERROR_MESSAGE}"/>
+							</table:template>
+						</table:Column>
+						<table:Column width="12rem" sortProperty="ERROR_STEP" filterProperty="ERROR_STEP">
+							<Label text="{i18n>historyErrorStepLabel}"/>
+							<table:template>
+								<Text text="{historyModel>ERROR_STEP}"/>
+							</table:template>
+						</table:Column>
 					</table:columns>
 				</table:Table>
 			</VBox>
