@@ -21,11 +21,12 @@
 				<!-- History Table -->
 				<table:Table id="historyTable"
 					width="100%"
-					visibleRowCountMode="Auto"
-					minAutoRowCount="30"
 					selectionMode="Multi"
 					selectionChange=".onHistorySelectionChange"
 					rows="{ path: 'historyModel>/historyData' }">
+					<table:rowMode>
+						<table:rowmodes.Auto minRowCount="1" hideEmptyRows="true" />
+					</table:rowMode>
 					<table:extension>
 						<OverflowToolbar class="sapUiMediumMarginTop">
 							<Title text="{i18n>historyDocumentHistoryTitle}" level="H3"/>
@@ -46,7 +47,7 @@
 								<Text text="{= ${historyModel>RECORD_TYPE} === '01' ? ${i18n>recordTypeSend} : ${i18n>recordTypeAck}}"/>
 							</table:template>
 						</table:Column>
-						<table:Column width="9rem" sortProperty="STATUS" filterProperty="STATUS">
+						<table:Column width="11rem" sortProperty="STATUS" filterProperty="STATUS">
 							<Label text="{i18n>historyStatusLabel}"/>
 							<table:template>
 								<VBox>

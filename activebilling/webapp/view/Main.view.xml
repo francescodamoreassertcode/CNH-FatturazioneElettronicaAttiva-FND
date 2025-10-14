@@ -151,7 +151,7 @@
 				fixedColumnCount="5"
 				rows="{ path: 'app>/rows' }">
 				<table:rowMode>
-					<table:rowmodes.Auto minRowCount="5" />
+						<table:rowmodes.Auto minRowCount="1" hideEmptyRows="true" />
 				</table:rowMode>
 				<table:extension>
 					<OverflowToolbar class="sapUiMediumMarginTop">
