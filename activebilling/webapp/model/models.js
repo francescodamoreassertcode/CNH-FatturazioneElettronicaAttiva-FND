@@ -81,6 +81,17 @@ function (JSONModel, Device) {
             return oModel;
         },
 
+        createVariantModel: function () {
+            var oModel = new JSONModel({
+                variants: [],
+                currentVariantKey: "*standard*",
+                defaultVariantKey: null,
+                modified: false
+            });
+            oModel.setDefaultBindingMode("TwoWay");
+            return oModel;
+        }
+
     };
 
 });

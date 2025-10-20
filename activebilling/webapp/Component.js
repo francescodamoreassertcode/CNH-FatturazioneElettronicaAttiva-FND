@@ -37,6 +37,9 @@ sap.ui.define([
             // set the role model
             this.setModel(models.createRoleModel(), "roleModel");
 
+            // set the variant model
+            this.setModel(models.createVariantModel(), "variantModel");
+
             // enable routing
             this.getRouter().initialize();
         },

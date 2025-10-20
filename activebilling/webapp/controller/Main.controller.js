@@ -7,8 +7,10 @@ sap.ui.define([
 "sap/ui/model/json/JSONModel",
 "cnh/ab/activebilling/utils/Formatter",
 "sap/m/MessageToast",
-"cnh/ab/activebilling/utils/ServiceConfig"
-], (BaseController, MessageBox, Token, Filter, FilterOperator, JSONModel, Formatter, MessageToast, ServiceConfig) => {
+"cnh/ab/activebilling/utils/ServiceConfig",
+"cnh/ab/activebilling/utils/VariantStorage",
+"sap/ui/comp/variants/VariantItem"
+], (BaseController, MessageBox, Token, Filter, FilterOperator, JSONModel, Formatter, MessageToast, ServiceConfig, VariantStorage, VariantItem) => {
 "use strict";
 
 return BaseController.extend("cnh.ab.activebilling.controller.Main", {
@@ -33,6 +35,9 @@ onInit() {
 
     // Initialize language selector
     this._initLanguageSelector();
+
+    // Initialize variant management
+    this._initializeVariantManagement();
 },
 
 onAfterRendering: function() {
@@ -61,7 +66,21 @@ onRouteMatched: function() {
 
     // Load dynamic filter data first, then load documents
     this._loadFilterData().then(() => {
-        this._loadDocumentData();
+        // Load variant filters if needed (first time after app init)
+        if (this._bNeedToLoadVariantOnStart) {
+            this._bNeedToLoadVariantOnStart = false;
+            const sCurrentKey = VariantStorage.getCurrentVariant();
+            if (sCurrentKey && sCurrentKey !== "*standard*") {
+                const oVariant = VariantStorage.getVariant(sCurrentKey);
+                if (oVariant) {
+                    console.log("Auto-loading variant filters:", oVariant.name);
+                    this._loadVariantFilters(oVariant);
+                }
+            }
+        } else {
+            // Normal route - just load documents
+            this._loadDocumentData();
+        }
     });
 },
 
@@ -924,10 +943,10 @@ onDownloadCsvPressed: function(oEvent) {
     }
 
     // Download PDF from Object Store using backend method
-    this._downloadPdfFromObjectStore(oContextData);
+   this._downloadFileFromObjectStore(oContextData);
 },
 
-_downloadPdfFromObjectStore: async function (oHistoryRecord) {
+_downloadFileFromObjectStore: async function (oHistoryRecord) {
     this.showBusy();
 
     try {
@@ -947,36 +966,57 @@ _downloadPdfFromObjectStore: async function (oHistoryRecord) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // --- Step 1: Read the Base64 string directly
+        // Read the Base64 string
         const base64 = await response.text();
-        if (!base64 || !base64.startsWith("JVBER")) {
-            throw new Error("Invalid Base64 PDF data received");
+        if (!base64 || base64.trim() === "") {
+            throw new Error("Empty or invalid file data received");
         }
 
-        // --- Step 2: Convert Base64 → binary PDF blob
+        // Detect file type from filename extension
+        const sFileName = oHistoryRecord.FILE_NAME || "download";
+        const sFileExtension = sFileName.split('.').pop().toLowerCase();
+        let sMimeType = "application/octet-stream"; // Default
+        
+        // Map common file extensions to MIME types
+        const mimeTypeMap = {
+            'pdf': 'application/pdf',
+            'csv': 'text/csv',
+            'txt': 'text/plain',
+            'xml': 'application/xml',
+            'json': 'application/json',
+            'zip': 'application/zip',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls': 'application/vnd.ms-excel'
+        };
+        
+        sMimeType = mimeTypeMap[sFileExtension] || sMimeType;
+        
+        console.log("Downloading file:", sFileName, "Type:", sMimeType);
+
+        // Convert Base64 to binary blob
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const blob = new Blob([byteArray], { type: sMimeType });
 
-        // --- Step 3: Trigger browser download
+        // Trigger browser download
         const url = URL.createObjectURL(blob);
         const downloadLink = document.createElement("a");
         downloadLink.href = url;
-        downloadLink.download = oHistoryRecord.FILE_NAME || "document.pdf";
+        downloadLink.download = sFileName;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(url);
 
-        MessageToast.show(`PDF downloaded successfully: ${oHistoryRecord.FILE_NAME}`);
+        MessageToast.show(`File downloaded successfully: ${sFileName}`);
 
     } catch (error) {
-        console.error("PDF download failed:", error);
-        MessageBox.error(`PDF download failed: ${error.message}`);
+        console.error("File download failed:", error);
+        MessageBox.error(`File download failed: ${error.message}`);
     } finally {
         this.hideBusy();
     }
@@ -1004,6 +1044,395 @@ onLanguageChange: function(oEvent) {
     // Switch language
     oComponent.switchLanguage(sSelectedLanguage);
 },
+
+// =========================================================================
+// Variant Management Methods - ENHANCED IMPLEMENTATION
+// =========================================================================
+
+/**
+ * Initialize variant management with saved variants
+ * @private
+ */
+_initializeVariantManagement: function() {
+    const oVariantManagement = this.byId("vm");
+    if (!oVariantManagement) {
+        console.error("VariantManagement control not found");
+        return;
+    }
+
+    try {
+        // Load saved variants from storage
+        const aVariants = VariantStorage.getVariants();
+        console.log("Loading variants from storage:", aVariants.length, "variants found");
+
+        // Clear existing items (except standard)
+        oVariantManagement.destroyVariantItems();
+
+        // Add Standard variant (always first)
+        oVariantManagement.addVariantItem(new VariantItem({
+            key: "*standard*",
+            text: "Standard"
+        }));
+
+        // Add saved variants
+        aVariants.forEach(oVariant => {
+            oVariantManagement.addVariantItem(new VariantItem({
+                key: oVariant.key,
+                text: oVariant.name
+            }));
+        });
+
+        // Set default variant key
+        const sDefaultKey = VariantStorage.getDefaultVariant();
+        if (sDefaultKey) {
+            oVariantManagement.setDefaultVariantKey(sDefaultKey);
+        } else {
+            oVariantManagement.setDefaultVariantKey("*standard*");
+        }
+
+        // Set current variant from storage
+        const sCurrentKey = VariantStorage.getCurrentVariant();
+        if (sCurrentKey && sCurrentKey !== "*standard*") {
+            // Verify the variant exists
+            const oVariant = VariantStorage.getVariant(sCurrentKey);
+            if (oVariant) {
+                oVariantManagement.setCurrentVariantKey(sCurrentKey);
+                // Don't load filters here - will be done in onRouteMatched after filter data is ready
+                this._bNeedToLoadVariantOnStart = true;
+            } else {
+                oVariantManagement.setCurrentVariantKey("*standard*");
+            }
+        } else {
+            oVariantManagement.setCurrentVariantKey("*standard*");
+        }
+        
+        console.log("Variant management initialized with", aVariants.length, "variants");
+    } catch (error) {
+        console.error("Error initializing variant management:", error);
+        MessageToast.show("Error loading saved variants");
+    }
+},
+
+/**
+ * Event handler when a variant is selected
+ * @param {sap.ui.base.Event} oEvent - The select event
+ */
+onSelectVariant: function(oEvent) {
+    const sVariantKey = oEvent.getParameter("key");
+    
+    console.log("Variant selected:", sVariantKey);
+    
+    try {
+        // Store current selection
+        VariantStorage.setCurrentVariant(sVariantKey);
+        
+        // For standard variant, clear filters
+        if (!sVariantKey || sVariantKey === "*standard*") {
+            this.clearAllFilters();
+            MessageToast.show(this._getText("variantStandardSelected"));
+            return;
+        }
+        
+        // Load variant from storage
+        const oVariant = VariantStorage.getVariant(sVariantKey);
+        
+        if (oVariant) {
+            this._loadVariantFilters(oVariant);
+            MessageToast.show(this._getText("variantLoaded", [oVariant.name]));
+        } else {
+            console.warn("Variant not found:", sVariantKey);
+            MessageBox.warning("The selected variant could not be loaded. It may have been deleted.");
+            // Reset to standard
+            this.byId("vm").setCurrentVariantKey("*standard*");
+            this.clearAllFilters();
+        }
+    } catch (error) {
+        console.error("Error loading variant:", error);
+        MessageBox.error("Failed to load variant: " + error.message);
+    }
+},
+
+/**
+ * Load variant filters into the filter model
+ * @private
+ * @param {object} oVariant - Variant object
+ */
+_loadVariantFilters: function(oVariant) {
+    const oFilterModel = this.getView().getModel("filterModel");
+    if (!oFilterModel) {
+        console.error("Filter model not found");
+        return;
+    }
+
+    // Get filter data from variant (support both 'data' and 'filterData' properties)
+    const oFilterData = oVariant.filterData || oVariant.data || {};
+    
+    // Merge with current dynamic data to preserve dropdown options
+    const oCurrentData = oFilterModel.getData();
+    const oNewData = {
+        // Filter values from variant
+        BUKRS: oFilterData.BUKRS || [],
+        BELNR: oFilterData.BELNR || [],
+        GJAHR: oFilterData.GJAHR || "",
+        BLDATFrom: oFilterData.BLDATFrom || "",
+        BLDATTo: oFilterData.BLDATTo || "",
+        BLDATRange: oFilterData.BLDATRange || "",
+        INV_TYPE: oFilterData.INV_TYPE || [],
+        AWSYS: oFilterData.AWSYS || [],
+        STATUS: oFilterData.STATUS || [],
+        KUNNR: oFilterData.KUNNR || [],
+        
+        // Preserve dynamic data
+        invoiceTypes: oCurrentData.invoiceTypes || [],
+        originSystems: oCurrentData.originSystems || [],
+        companySuggestions: oCurrentData.companySuggestions || []
+    };
+    
+    oFilterModel.setData(oNewData);
+    
+    // Update MultiInput tokens
+    this._updateMultiInputTokensFromData(oFilterData);
+    
+    // Apply the filters (trigger search)
+    this._applyFilters();
+},
+
+/**
+ * Event handler when a variant is saved
+ * @param {sap.ui.base.Event} oEvent - The save event
+ */
+onSaveVariant: function(oEvent) {
+    const sVariantName = oEvent.getParameter("name");
+    const bOverwrite = oEvent.getParameter("overwrite");
+    const bDefault = oEvent.getParameter("def") || false;
+    let sVariantKey = oEvent.getParameter("key");
+    
+    console.log("Saving variant:", sVariantName, "Overwrite:", bOverwrite, "Default:", bDefault);
+    
+    try {
+        // Get current filter values
+        const oFilterModel = this.getView().getModel("filterModel");
+        if (!oFilterModel) {
+            MessageBox.error("Filter model not found");
+            return;
+        }
+        
+        const oFilterData = oFilterModel.getData();
+        
+        // Prepare variant data (exclude dynamic dropdown data)
+        const oVariantFilterData = {
+            BUKRS: oFilterData.BUKRS || [],
+            BELNR: oFilterData.BELNR || [],
+            GJAHR: oFilterData.GJAHR || "",
+            BLDATFrom: oFilterData.BLDATFrom || "",
+            BLDATTo: oFilterData.BLDATTo || "",
+            BLDATRange: oFilterData.BLDATRange || "",
+            INV_TYPE: oFilterData.INV_TYPE || [],
+            AWSYS: oFilterData.AWSYS || [],
+            STATUS: oFilterData.STATUS || [],
+            KUNNR: oFilterData.KUNNR || []
+        };
+        
+        // Check if variant has at least one filter
+        const bHasFilters = this._variantHasFilters(oVariantFilterData);
+        if (!bHasFilters) {
+            MessageBox.warning(this._getText("noFiltersSetWarning"));
+            return;
+        }
+        
+        // Generate key for new variants or use existing key
+        if (!bOverwrite || !sVariantKey || sVariantKey === "*standard*") {
+            sVariantKey = VariantStorage.generateKey();
+        }
+        
+        // Create variant object
+        const oVariant = {
+            key: sVariantKey,
+            name: sVariantName,
+            default: bDefault,
+            filterData: oVariantFilterData,
+            createdAt: new Date().toISOString(),
+            modifiedAt: new Date().toISOString()
+        };
+        
+        // Save to storage
+        const bSuccess = VariantStorage.saveVariant(oVariant);
+        
+        if (!bSuccess) {
+            MessageBox.error("Failed to save variant");
+            return;
+        }
+        
+        // Update VariantManagement control
+        const oVariantManagement = this.byId("vm");
+        if (oVariantManagement) {
+            if (!bOverwrite) {
+                // Add new variant item
+                oVariantManagement.addVariantItem(new VariantItem({
+                    key: sVariantKey,
+                    text: sVariantName
+                }));
+            } else {
+                // Update existing item text if name changed
+                const aItems = oVariantManagement.getVariantItems();
+                const oExistingItem = aItems.find(item => item.getKey() === sVariantKey);
+                if (oExistingItem) {
+                    oExistingItem.setText(sVariantName);
+                }
+            }
+            
+            // Update default variant if needed
+            if (bDefault) {
+                oVariantManagement.setDefaultVariantKey(sVariantKey);
+            }
+            
+            // Set as selected
+            oVariantManagement.setCurrentVariantKey(sVariantKey);
+        }
+        
+        // Store as current
+        VariantStorage.setCurrentVariant(sVariantKey);
+        
+        // Show success message
+        MessageToast.show(this._getText("variantSaved", [sVariantName]));
+        
+        console.log("Variant saved successfully:", sVariantName, sVariantKey);
+    } catch (error) {
+        console.error("Error saving variant:", error);
+        MessageBox.error("Failed to save variant: " + error.message);
+    }
+},
+
+/**
+ * Check if variant has at least one filter value
+ * @private
+ * @param {object} oFilterData - Filter data object
+ * @returns {boolean} True if has filters
+ */
+_variantHasFilters: function(oFilterData) {
+    // Check array filters
+    const bHasArrayFilters = ["BUKRS", "BELNR", "INV_TYPE", "AWSYS", "STATUS", "KUNNR"]
+        .some(sKey => oFilterData[sKey] && oFilterData[sKey].length > 0);
+    
+    // Check string filters
+    const bHasStringFilters = ["GJAHR", "BLDATFrom", "BLDATTo", "BLDATRange"]
+        .some(sKey => oFilterData[sKey] && oFilterData[sKey].trim() !== "");
+    
+    return bHasArrayFilters || bHasStringFilters;
+},
+
+/**
+ * Event handler when the manage variants dialog is opened
+ * @param {sap.ui.base.Event} oEvent - The manage event  
+ */
+onManageVariants: function(oEvent) {
+    console.log("Managing variants");
+    
+    try {
+        // Get renamed and deleted variants from event
+        const aRenamed = oEvent.getParameter("renamed") || [];
+        const aDeleted = oEvent.getParameter("deleted") || [];
+        const sDefaultVariantKey = oEvent.getParameter("def");
+        
+        let iRenamedCount = 0;
+        let iDeletedCount = 0;
+        
+        // Handle renames
+        aRenamed.forEach(oRename => {
+            const sKey = oRename.key;
+            const sNewName = oRename.name;
+            const bSuccess = VariantStorage.renameVariant(sKey, sNewName);
+            if (bSuccess) {
+                iRenamedCount++;
+                console.log("Renamed variant:", sKey, "to", sNewName);
+            }
+        });
+        
+        // Handle deletions
+        aDeleted.forEach(sKey => {
+            const bSuccess = VariantStorage.deleteVariant(sKey);
+            if (bSuccess) {
+                iDeletedCount++;
+                
+                // Remove from control
+                const oVariantManagement = this.byId("vm");
+                if (oVariantManagement) {
+                    const aItems = oVariantManagement.getVariantItems();
+                    const oItemToRemove = aItems.find(item => item.getKey() === sKey);
+                    if (oItemToRemove) {
+                        oVariantManagement.removeVariantItem(oItemToRemove);
+                    }
+                }
+                console.log("Deleted variant:", sKey);
+            }
+        });
+        
+        // Handle default variant change
+        if (sDefaultVariantKey) {
+            VariantStorage.setDefaultVariant(sDefaultVariantKey);
+            const oVariantManagement = this.byId("vm");
+            if (oVariantManagement) {
+                oVariantManagement.setDefaultVariantKey(sDefaultVariantKey);
+            }
+            console.log("Default variant set to:", sDefaultVariantKey);
+        }
+        
+        // Show success message
+        if (iRenamedCount > 0 || iDeletedCount > 0) {
+            let sMessage = [];
+            if (iRenamedCount > 0) {
+                sMessage.push(`${iRenamedCount} variant(s) renamed`);
+            }
+            if (iDeletedCount > 0) {
+                sMessage.push(`${iDeletedCount} variant(s) deleted`);
+            }
+            MessageToast.show(sMessage.join(", "));
+        }
+        
+        console.log("Variants renamed:", iRenamedCount, "deleted:", iDeletedCount);
+    } catch (error) {
+        console.error("Error managing variants:", error);
+        MessageBox.error("Failed to update variants: " + error.message);
+    }
+},
+
+/**
+ * Helper method to update MultiInput tokens from variant data
+ * @private
+ * @param {object} oFilterData - The filter data object
+ */
+_updateMultiInputTokensFromData: function(oFilterData) {
+    // Update BUKRS MultiInput
+    const oBUKRSInput = this.byId("multiInput1");
+    if (oBUKRSInput && oFilterData.BUKRS) {
+        oBUKRSInput.removeAllTokens();
+        oFilterData.BUKRS.forEach(sValue => {
+            oBUKRSInput.addToken(new Token({ text: sValue, key: sValue }));
+        });
+    }
+    
+    // Update BELNR MultiInput
+    const oBELNRInput = this.byId("multiInput2");
+    if (oBELNRInput && oFilterData.BELNR) {
+        oBELNRInput.removeAllTokens();
+        oFilterData.BELNR.forEach(sValue => {
+            oBELNRInput.addToken(new Token({ text: sValue, key: sValue }));
+        });
+    }
+    
+    // Update KUNNR MultiInput
+    const oKUNNRInput = this.byId("multiInput3");
+    if (oKUNNRInput && oFilterData.KUNNR) {
+        oKUNNRInput.removeAllTokens();
+        oFilterData.KUNNR.forEach(sValue => {
+            oKUNNRInput.addToken(new Token({ text: sValue, key: sValue }));
+        });
+    }
+},
+
+// =========================================================================
+// End of Variant Management Methods
+// =========================================================================
 
 // Cleanup method to destroy dialogs when controller is destroyed
 onExit: function() {
