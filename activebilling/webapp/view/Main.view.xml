@@ -11,7 +11,7 @@
 						manage=".onManageVariants"
 						showExecuteOnSelection="false"
 						showSetAsDefault="true"
-						showShare="false"/>
+						showShare="false"/>				
 				</f:heading>
 				<f:actions>
 					<Select id="languageSelector" 
@@ -156,6 +156,11 @@
 					<OverflowToolbar class="sapUiMediumMarginTop">
 						<Title text="{i18n>DocumentListTable} ({= ${app>/rows}.length})" level="H2"/>
 						<ToolbarSpacer/>
+						<Button 
+							icon="sap-icon://excel-attachment" 
+							text="{i18n>downloadExcel}" 
+							press=".onDownloadExcel"
+							tooltip="{i18n>downloadExcelTooltip}"/>
 						<Button text="{i18n>ResendBtn}" type="Emphasized" customData:function="Resend" press=".onTableBtnPressed"/>
 						<Button text="{i18n>CancelBtn}" type="Emphasized" customData:function="Cancel" press=".onTableBtnPressed"/>
 					</OverflowToolbar>
