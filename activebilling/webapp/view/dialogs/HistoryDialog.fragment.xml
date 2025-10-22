@@ -57,6 +57,12 @@
 								</VBox>
 							</table:template>
 						</table:Column>
+						<table:Column width="10rem" sortProperty="ACK_CODE" filterProperty="ACK_CODE">
+							<Label text="{i18n>historyAckCodeLabel}"/>
+							<table:template>
+								<Text text="{historyModel>ACK_CODE}"/>
+							</table:template>
+						</table:Column>
 						<table:Column width="10rem" sortProperty="INSERT_DATE" filterProperty="INSERT_DATE">
 							<Label text="{i18n>historyInsertDateLabel}"/>
 							<table:template>
