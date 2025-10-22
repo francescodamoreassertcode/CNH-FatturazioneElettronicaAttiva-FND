@@ -372,23 +372,19 @@ sap.ui.define([
     
     onCompanyValueHelpOK: function() {
         const oTable = this.byId("companyValueHelpTable");
-        const aSelectedIndices = oTable.getSelectedIndices();
+        const aSelectedContexts = oTable.getSelectedContexts();
         const oFilterModel = this.getView().getModel("filterModel");
     
-        if (aSelectedIndices.length === 0) {
+        if (aSelectedContexts.length === 0) {
             MessageToast.show("Please select at least one company");
             return;
         }
     
-        // Get selected company codes
+        // Get selected company codes from contexts
         const aSelectedBUKRS = [];
-        aSelectedIndices.forEach(iIndex => {
-            const oItem = oTable.getItems()[iIndex];
-            const oContext = oItem.getBindingContext("filterModel");
-            if (oContext) {
-                const oData = oContext.getObject();
-                aSelectedBUKRS.push(oData.BUKRS);
-            }
+        aSelectedContexts.forEach(oContext => {
+            const oData = oContext.getObject();
+            aSelectedBUKRS.push(oData.BUKRS);
         });
     
         // Update filter model
@@ -909,7 +905,8 @@ sap.ui.define([
             GJAHR: oDocument.GJAHR,
             BELNR: oDocument.BELNR,
             ACK_USER: sAckCode,
-            ACK_USER_DESCR: sAckUserText || ""
+            ACK_USER_DESCR: sAckUserText || "",
+            STATUS: "08" // Set status to COMPLETED when ACK user is assigned
         };
     
         const response = await fetch(ServiceConfig.getServiceUrl("patchDocumentList"), {

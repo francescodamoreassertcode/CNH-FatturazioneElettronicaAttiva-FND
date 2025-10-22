@@ -9,13 +9,6 @@
 					width="100%">
 					<core:ListItem key="USR01" text="USR01" additionalText="{i18n>ackUserUsr01}"/>
 					<core:ListItem key="USR02" text="USR02" additionalText="{i18n>ackUserUsr02}"/>
-					<core:ListItem key="USR03" text="USR03" additionalText="{i18n>ackUserUsr03}"/>
-					<core:ListItem key="USR04" text="USR04" additionalText="{i18n>ackUserUsr04}"/>
-					<core:ListItem key="USR05" text="USR05" additionalText="{i18n>ackUserUsr05}"/>
-					<core:ListItem key="USR06" text="USR06" additionalText="{i18n>ackUserUsr06}"/>
-					<core:ListItem key="USR07" text="USR07" additionalText="{i18n>ackUserUsr07}"/>
-					<core:ListItem key="USR08" text="USR08" additionalText="{i18n>ackUserUsr08}"/>
-					<core:ListItem key="USR10" text="USR10" additionalText="{i18n>ackUserUsr10}"/>
 				</ComboBox>
 				
 				<Label text="{i18n>ackUserTextLabel}" class="sapUiMediumMarginTop sapUiMediumMarginBottom"/>

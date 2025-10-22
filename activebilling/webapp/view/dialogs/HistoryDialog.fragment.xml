@@ -41,12 +41,6 @@
 						</OverflowToolbar>
 					</table:extension>
 					<table:columns>
-						<table:Column width="8rem" sortProperty="RECORD_TYPE" filterProperty="RECORD_TYPE">
-							<Label text="{i18n>historyRecordTypeLabel}"/>
-							<table:template>
-								<Text text="{= ${historyModel>RECORD_TYPE} === '01' ? ${i18n>recordTypeSend} : ${i18n>recordTypeAck}}"/>
-							</table:template>
-						</table:Column>
 						<table:Column width="11rem" sortProperty="STATUS" filterProperty="STATUS">
 							<Label text="{i18n>historyStatusLabel}"/>
 							<table:template>
