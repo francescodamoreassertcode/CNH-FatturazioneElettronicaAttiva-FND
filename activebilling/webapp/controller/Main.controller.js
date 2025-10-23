@@ -589,6 +589,7 @@ sap.ui.define([
                     ? Formatter.getMostRecentAckCode(oRow.documentHistories) 
                     : "",
                 // Convert date strings to Date objects for proper Excel export
+                STATUS: Formatter.formatStatus(oRow.STATUS),
                 BUDAT: oRow.BUDAT ? new Date(oRow.BUDAT) : null,
                 BLDAT: oRow.BLDAT ? new Date(oRow.BLDAT) : null
             };
@@ -1721,6 +1722,13 @@ sap.ui.define([
             })
             .then(data => {
                 if (data && data.value) {
+                    // Sort by posting date (BUDAT) from most recent to least recent
+                    data.value.sort((a, b) => {
+                        const dateA = new Date(a.BUDAT);
+                        const dateB = new Date(b.BUDAT);
+                        return dateB - dateA;
+                    });
+
                     oAppModel.setProperty("/rows", data.value);
                     const iCount = data.value.length;
                     MessageToast.show(`Loaded ${iCount} documents`);

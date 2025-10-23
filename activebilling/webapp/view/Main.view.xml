@@ -120,6 +120,7 @@
                                     <core:Item key="07" text="RESEND"/>
                                     <core:Item key="08" text="COMPLETED"/>
                                     <core:Item key="09" text="COMM_ERR"/>
+                                    <core:Item key="10" text="AENS_ERR"/>
                                 </MultiComboBox>
                             </fb:control>
                         </fb:FilterGroupItem>
@@ -204,6 +205,7 @@
 								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusResend" visible="{= ${app>STATUS} === '07'}"/>
 								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCompleted" visible="{= ${app>STATUS} === '08'}"/>
 								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusCommErr" visible="{= ${app>STATUS} === '09'}"/>
+								<Text text="{ path: 'app>STATUS', formatter: '.formatter.formatStatus' }" class="btnStatusAensErr" visible="{= ${app>STATUS} === '10'}"/>
 							</VBox>
 						</table:template>
 					</table:Column>
@@ -343,6 +345,22 @@
 						<Label text="{i18n>awsys}"/>
 						<table:template>
 							<Text text="{app>AWSYS}"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- Update Date -->
+					<table:Column width="12rem" sortProperty="UPDATE_DATE" filterProperty="UPDATE_DATE">
+						<Label text="{i18n>update_date}"/>
+						<table:template>
+							<Text text="{ path: 'app>UPDATE_DATE', formatter: '.formatter.formatIsoToDMYDash' }"/>
+						</table:template>
+					</table:Column>
+					
+					<!-- User Update -->
+					<table:Column width="12rem" sortProperty="USER_UPDATE" filterProperty="USER_UPDATE">
+						<Label text="{i18n>user_update}"/>
+						<table:template>
+							<Text text="{app>USER_UPDATE}"/>
 						</table:template>
 					</table:Column>
 				</table:columns>

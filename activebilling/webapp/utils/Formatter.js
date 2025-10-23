@@ -183,7 +183,8 @@ sap.ui.define([
                 "06": "DT_ERR",
                 "07": "RESEND",
                 "08": "COMPLETED",
-                "09": "COMM_ERR"
+                "09": "COMM_ERR",
+                "10": "AENS_ERR"
             };
             
             return statusMap[status] || status;
