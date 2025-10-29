@@ -19,6 +19,10 @@ server:
           - path: /http
             url: https://int-cert01.it-cpi026-rt.cfapps.eu10-002.hana.ondemand.com
             destination: ITS_DEST
+
+          - path: /odata/v4/catalg
+            destination: EINV_CAP_BackEnd_SRV
+            
     - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:

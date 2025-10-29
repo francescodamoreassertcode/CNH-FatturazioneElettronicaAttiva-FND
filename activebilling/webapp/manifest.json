@@ -23,6 +23,15 @@
           "annotations": [],
           "odataVersion": "4.0"
         }
+      },
+      "capSrv": {
+       "uri": "/odata/v4/catalg/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/metadata.xml",
+          "odataVersion": "4.0"
+        }
       }
     }
   },
@@ -64,6 +73,16 @@
       },
       "": {
         "dataSource": "mainService",
+        "type": "sap.ui.model.odata.v4.ODataModel",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "capServiceModel": {
+        "dataSource": "capSrv",
         "type": "sap.ui.model.odata.v4.ODataModel",
         "preload": true,
         "settings": {
